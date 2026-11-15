@@ -18,6 +18,20 @@ Fetched by `scripts/fetch-inputs.sh`, which pins full SHAs and fails if any of t
 | 2026-11-15 | wallet-backend 2c87335 (the #729 fix) | `2c873353c1f0f3c9b145e25a7d009023ad104a1c`, committed 2026-09-08, "fix: handle CAP-40 signed-payload signers in ingestion (#729)" | https://github.com/stellar/wallet-backend/commit/2c873353c1f0f3c9b145e25a7d009023ad104a1c |
 | 2026-11-15 | wallet-backend 3e22515 (HEAD) | `3e22515a44979fdc3a558fda3991ca2b48e38cef`, committed 2026-11-12; still the default-branch HEAD on 2026-11-15 | https://github.com/stellar/wallet-backend/commit/3e22515a44979fdc3a558fda3991ca2b48e38cef |
 
+## wallet-backend internals the harness depends on
+
+Read from the source at each pinned commit (`git show <sha>:<path>` in the fetched clone).
+
+| Checked | Fact | Value | Source |
+|---|---|---|---|
+| 2026-11-15 | `NewIndexer` at 2a0a84e and 2c87335 | `NewIndexer(networkPassphrase string, pool pond.Pool, ingestionMetrics *metrics.IngestionMetrics) (*Indexer, error)` | `internal/indexer/indexer.go:119` |
+| 2026-11-15 | `NewIndexer` at 3e22515 | adds `collectContractData bool` as a fourth parameter | `internal/indexer/indexer.go:113` |
+| 2026-11-15 | What production passes for `collectContractData` | true only in live ingestion mode when a protocol processor requires contract data; the harness passes true to exercise that path | `internal/services/ingest.go:248` (`collectsContractData`) at 3e22515 |
+| 2026-11-15 | `ProcessLedger` at all three commits | `ProcessLedger(ctx, networkPassphrase string, ledgerMeta xdr.LedgerCloseMeta, ledgerIndexer *Indexer, buffer *IndexerBuffer) (int, error)` | `internal/indexer/indexer.go` |
+| 2026-11-15 | Every transaction reaches the buffer unless processing returns an error (so "indexed < in meta" means dropped) | `ProcessLedgerTransactions` folds every non-nil result into the buffer; a nil result only occurs with an error, which aborts the ledger | `internal/indexer/indexer.go:168` at 3e22515 |
+| 2026-11-15 | The #729 fix changed the signer column's encoder | `StateChange.SignerAccountID` is `NullAddressBytea` at 2a0a84e and `NullSignerKeyBytea` at 2c87335 | `internal/indexer/types/types.go` |
+| 2026-11-15 | go-stellar-sdk used by wallet-backend | v0.7.3 at 2a0a84e and 2c87335; v0.8.0 at 3e22515 (all `go 1.25.9`) | `go.mod` |
+
 ## Protocol constants
 
 | Checked | Fact | Value | Source |
