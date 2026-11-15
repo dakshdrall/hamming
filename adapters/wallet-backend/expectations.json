@@ -1,0 +1,35 @@
+{
+  "target": "wallet-backend",
+  "repo": "https://github.com/stellar/wallet-backend",
+  "commits": {
+    "2a0a84e": "2a0a84ea12523b6c92e278c0c84b443041240095",
+    "2c87335": "2c873353c1f0f3c9b145e25a7d009023ad104a1c",
+    "3e22515": "3e22515a44979fdc3a558fda3991ca2b48e38cef"
+  },
+  "entries": [
+    {
+      "entry": "corpus/mutated/cap40-signed-payload-signer-p28.xdr",
+      "issue": "stellar/wallet-backend#729",
+      "why": "A CAP-40 signed-payload signer (P...) has a 68-byte strkey payload; before the fix the signer column encoder accepted only 32-byte account/contract keys, so the ledger indexes but cannot be persisted.",
+      "verdicts": {
+        "2a0a84e": "mishandled(persist)",
+        "2c87335": "pass",
+        "3e22515": "pass"
+      }
+    },
+    {
+      "entry": "cache:core-f2b9194/test-lcm-current/BumpSequenceTests/27d2533d64835282.xdr",
+      "why": "Protocol 30 golden whose ledger headers use STELLAR_VALUE_SIGNED_MS (StellarValueType 3). go-stellar-sdk v0.7.3, used by 2a0a84e, predates that value; v0.8.0, used by 3e22515, decodes it. The harness must report this as a protocol gap, not as a failure.",
+      "verdicts": {
+        "2a0a84e": "unsupported-protocol",
+        "3e22515": "pass"
+      }
+    }
+  ],
+  "golden_replay": {
+    "commit": "3e22515",
+    "root": "cache:core-f2b9194/test-lcm-current",
+    "expect": "pass",
+    "why": "Every protocol 30 golden must index and persist on HEAD with no decode error, indexer error, panic or dropped transaction."
+  }
+}
