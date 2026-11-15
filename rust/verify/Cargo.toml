@@ -1,0 +1,8 @@
+[package]
+name = "hamming-verify"
+version = "0.1.0"
+edition = "2021"
+[dependencies]
+stellar-xdr = { version = "30.0.0", features = ["std"] }
+[profile.release]
+opt-level = 3

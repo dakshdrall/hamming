@@ -1,0 +1,134 @@
+{
+  "schema": "https://example.invalid/xdr-corpus/manifest.schema.json",
+  "schema_version": "0.1.0",
+  "network_passphrase": "Test SDF Network ; September 2015",
+  "entries": [
+    {
+      "id": "rel.asset-order.issuer-strkey-vs-bytes.0001",
+      "title": "Pool-share trustline: same asset code, issuers whose strkey text order disagrees with key-byte order",
+      "level": "relational",
+      "xdr_type": "TransactionEnvelope",
+      "file": "entries/rel.asset-order.issuer-strkey-vs-bytes.0001.xdr",
+      "encoding": "base64",
+      "sha256": "5afe08a019b2ed39214cece5a17bd873c8c2ede3b863d6999929d3c4ef56711d",
+      "bytes": 204,
+      "caps": [
+        "CAP-0038"
+      ],
+      "protocol_min": 18,
+      "source": {
+        "kind": "synthetic",
+        "generator": "py-stellar-base 17.0.1",
+        "reproduce": "python3 build_samples.py",
+        "core_capture": null
+      },
+      "synthetic": true,
+      "atoms": [
+        "ChangeTrustAsset|ASSET_TYPE_POOL_SHARE",
+        "rel:issuer_order(strkey_text) != issuer_order(key_bytes)"
+      ],
+      "expected": {
+        "operations[0].changeTrust.line.liquidityPool.constantProduct.assetA.issuer": "GDPUG4JKQGRJSCCBA4BOM2H6LLUGVKXTKW7VKVLNEPKFZOM3QAMXOC2Q",
+        "operations[0].changeTrust.line.liquidityPool.constantProduct.assetB.issuer": "GD6AM2NMWWC47QQXSQDOR5KYQFPTRFRPQHUDUTPA6WUNZZDS73FMVKDR",
+        "operations[0].changeTrust.line.liquidityPool.constantProduct.fee": 30,
+        "derived.liquidityPoolId": "1c87331e54bf7cf43824c4ad798af9d1da921c2801e5439e8c73bd986fa6f60a"
+      },
+      "sdk_rules": [
+        "accepts-network-ordered-pair",
+        "derives-pool-id"
+      ],
+      "sightings": [
+        "stellar/js-stellar-sdk#1766"
+      ]
+    },
+    {
+      "id": "rel.scval-map.native-key-collision.0001",
+      "title": "ScMap with 4 distinct keys that collapse to 2 under naive native conversion (u32/i32 1; string/symbol 'a')",
+      "level": "relational",
+      "xdr_type": "SCVal",
+      "file": "entries/rel.scval-map.native-key-collision.0001.xdr",
+      "encoding": "base64",
+      "sha256": "e2f4927b903af128f990c897df3bd8c4f24a480341730eb810fd466acb7db015",
+      "bytes": 84,
+      "caps": [
+        "CAP-0046"
+      ],
+      "protocol_min": 20,
+      "source": {
+        "kind": "synthetic",
+        "generator": "py-stellar-base 17.0.1",
+        "reproduce": "python3 build_samples.py",
+        "core_capture": null
+      },
+      "synthetic": true,
+      "atoms": [
+        "SCVal|SCV_MAP",
+        "SCVal|SCV_U32",
+        "SCVal|SCV_I32",
+        "SCVal|SCV_STRING",
+        "SCVal|SCV_SYMBOL",
+        "rel:native(key_i) == native(key_j), key_i != key_j"
+      ],
+      "expected": {
+        "map.length": 4,
+        "map.keys": [
+          "u32:1",
+          "i32:1",
+          "string:a",
+          "symbol:a"
+        ],
+        "map.values": [
+          10,
+          20,
+          30,
+          40
+        ]
+      },
+      "sdk_rules": [
+        "native-conversion-preserves-or-throws"
+      ],
+      "sightings": [
+        "stellar/js-stellar-sdk#1789"
+      ]
+    },
+    {
+      "id": "val.muxed-id.u64-above-2p53.0001",
+      "title": "Muxed source id 2^53+1 and muxed destination id 2^64-1",
+      "level": "value",
+      "xdr_type": "TransactionEnvelope",
+      "file": "entries/val.muxed-id.u64-above-2p53.0001.xdr",
+      "encoding": "base64",
+      "sha256": "ab04ed0347acc05a7bbe0b3f926cf755aceefb77c7f8d1bbb0cc1ee7cfdf1291",
+      "bytes": 160,
+      "caps": [
+        "CAP-0027"
+      ],
+      "protocol_min": 13,
+      "source": {
+        "kind": "synthetic",
+        "generator": "py-stellar-base 17.0.1",
+        "reproduce": "python3 build_samples.py",
+        "core_capture": null
+      },
+      "synthetic": true,
+      "atoms": [
+        "MuxedAccount|KEY_TYPE_MUXED_ED25519",
+        "val:uint64>2^53",
+        "val:uint64==max"
+      ],
+      "expected": {
+        "tx.sourceAccount.id": "9007199254740993",
+        "tx.sourceAccount.address": "MDIEVMRSOQV3JKZ2CNUL2RQV4TTNAISKW4NAC25PQUQKGMWJO6DTOABAAAAAAAAAAHT2K",
+        "operations[0].payment.destination.id": "18446744073709551615",
+        "operations[0].payment.destination.address": "MCQJVJPUPJTVTABP7FK7RXBNFIKKLSM5EO7JP6DECJ77SOBUKWSPB77777777777752KW"
+      },
+      "sdk_rules": [
+        "muxed-id-exact",
+        "rejects-out-of-range-id(2^64)"
+      ],
+      "sightings": [
+        "stellar/js-stellar-sdk#1785"
+      ]
+    }
+  ]
+}

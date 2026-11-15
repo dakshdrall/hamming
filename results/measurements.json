@@ -1,0 +1,19 @@
+{
+  "measured_on": "2026-11-15, 2 vCPU / 7 GB sandbox",
+  "corpus": "stellar-core test-lcm-current @ f2b9194 (protocol 30): 866 files, 15,306 LedgerCloseMeta, 77.9 MB",
+  "decoder_agreement": {
+    "rs-stellar-xdr 30.0.0 (release)": {"lcms": 15306, "byte_mismatches": 0, "seconds": 0.52, "lcm_per_s": 29277, "mb_per_s": 149.0, "peak_rss_mb": 36},
+    "go-stellar-sdk v0.9.0": {"lcms": 15306, "byte_mismatches": 0, "seconds": 1.31, "lcm_per_s": 11682, "mb_per_s": 59.5},
+    "js-stellar-sdk 17.4.0": {"lcms": 15306, "byte_mismatches": 0, "seconds": 5.40, "lcm_per_s": 2835, "mb_per_s": 14.4, "rss_mb": 384},
+    "grammar-driven Python decoder (exact consumption + atom tracking)": {"lcms": 15306, "decode_errors": 0, "seconds": 15.9}
+  },
+  "wallet_backend_replay": {"commit": "3e22515 (2026-11-12)", "lcms": 15306, "ok": 15306, "errors": 0, "panics": 0, "seconds": 3.4, "participants": 19535},
+  "set_cover": {"files": 866, "atoms": 459, "greedy_cover_files": 51, "lower_bound_forced_files": 23, "max_atoms_in_one_file": 220, "greedy_factor_H(220)": 5.97},
+  "wallet_backend_729_reproduction": {
+    "entry": "corpus/mutated/cap40-signed-payload-signer-p28.xdr (synthetic: mutated from stellar-core golden BeginSponsoringFutureReservesTests/124577e8c014e46f.xdr @ abe1c55, protocol 28)",
+    "2a0a84e (pre-fix, 2026-09-04)": "mishandled (ledger cannot be persisted): SignerAccountID P... has a 68-byte key payload; column stores only 32-byte keys",
+    "2c87335 (fix, 2026-09-08)": "pass",
+    "3e22515 (HEAD, 2026-11-12)": "pass"
+  },
+  "protocol_routing_finding": "P30 goldens (StellarValueType 3, CAP-88) fail to decode on wallet-backend 2a0a84e's SDK: entries must be routed by protocol version"
+}

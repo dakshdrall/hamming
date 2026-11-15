@@ -1,0 +1,12 @@
+{
+ "SourceFile": "BeginSponsoringFutureReservesTests/124577e8c014e46f.xdr",
+ "OldTxHash": "93b3bfed4f4fb8b6c2fb5854eede30dd9d3e6fd813e256fa2158b3e431cf3a2b",
+ "NewTxHash": "f26dc5c4be7fdc90f34a5d819d9f460ca083ba29d793920c03942479aca0177d",
+ "SignedPayloadSigner": "PCEDCRZF3WHS3R6CWJ3WFILROPR6U6KR27B5SW6XYISELPLKW347MAAAAAQKXK5LVOV2XK5LVOV2XK5LVOV2XK5LVOV2XK5LVOV2XK5LVOV2XK2COE",
+ "LedgerSeq": 4,
+ "OpIndex": 1,
+ "EnvelopeEdits": 1,
+ "MetaSignerEdits": 1,
+ "Synthetic": true,
+ "Method": "core-golden mutation: ed25519 signer -\u003e CAP-40 signed-payload signer (same key, 32-byte payload) in envelope and op meta; tx hash recomputed with the core test passphrase"
+}
