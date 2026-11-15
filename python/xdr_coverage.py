@@ -5,7 +5,9 @@ ones the shape calculator counts. Pointed at stellar-core's committed golden
 LedgerCloseMeta files (record-marked XDR streams), it measures how much of the
 shape space stellar-core's own test suite already exercises.
 
-Usage: python3 xdr_coverage.py <stellar-xdr dir> <golden root> [root type]
+Usage: python3 xdr_coverage.py <stellar-xdr dir> <golden root> [root type] [--out covered_missing.json]
+
+Exits 1 if any frame fails to decode.
 """
 import json, os, struct, sys
 from collections import Counter, defaultdict
@@ -179,7 +181,13 @@ def frames(path):
 
 
 def main():
-    xdr_dir, golden, root = sys.argv[1], sys.argv[2], (sys.argv[3] if len(sys.argv) > 3 else "LedgerCloseMeta")
+    args = sys.argv[1:]
+    out_path = None
+    if "--out" in args:
+        i = args.index("--out")
+        out_path = args[i + 1]
+        del args[i:i + 2]
+    xdr_dir, golden, root = args[0], args[1], (args[2] if len(args) > 2 else "LedgerCloseMeta")
     defs, atoms, summary = XS.summarize(xdr_dir, root)
     dec = Decoder(defs)
     files = lcms = errors = 0
@@ -217,8 +225,11 @@ def main():
         "missing_union_arms_count": len(missing_arms),
     }
     print(json.dumps(out, indent=1))
-    json.dump({"covered": sorted(covered), "missing": sorted(atoms - covered)},
-              open(os.path.join(os.path.dirname(os.path.abspath(__file__)), f"coverage_{os.path.basename(golden.rstrip('/'))}.json"), "w"), indent=1)
+    if out_path is None:
+        out_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), f"coverage_{os.path.basename(golden.rstrip('/'))}.json")
+    json.dump({"covered": sorted(covered), "missing": sorted(atoms - covered)}, open(out_path, "w"), indent=1)
+    if errors:
+        sys.exit(1)
 
 
 if __name__ == "__main__":

@@ -24,4 +24,5 @@ fn main() {
     }
     let s = t.elapsed().as_secs_f64();
     println!("rs-stellar-xdr: {} LCMs, {:.1} MB, mismatches {}, {:.2}s, {:.0} LCM/s, {:.1} MB/s", n, bytes as f64/1e6, bad, s, n as f64/s, bytes as f64/1e6/s);
+    if bad > 0 { std::process::exit(1) }
 }

@@ -22,4 +22,4 @@ for (const f of files) {
 }
 const s = Number(process.hrtime.bigint() - t0) / 1e9;
 console.log(`js-stellar-sdk 17.4.0: ${n} LCMs, ${(bytes/1e6).toFixed(1)} MB, mismatches ${bad}, ${s.toFixed(2)}s, ${(n/s).toFixed(0)} LCM/s, ${(bytes/1e6/s).toFixed(1)} MB/s, heap ${(process.memoryUsage().rss/1e6).toFixed(0)} MB rss`);
-if (bad) console.log(JSON.stringify(errs));
+if (bad) { console.log(JSON.stringify(errs)); process.exit(1); }

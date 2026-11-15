@@ -35,4 +35,7 @@ func main() {
 	}
 	s := time.Since(t0).Seconds()
 	fmt.Printf("go-stellar-sdk: %d LCMs, %.1f MB, mismatches %d, %.2fs, %.0f LCM/s, %.1f MB/s\n", n, float64(total)/1e6, bad, s, float64(n)/s, float64(total)/1e6/s)
+	if bad > 0 {
+		os.Exit(1)
+	}
 }
