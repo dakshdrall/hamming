@@ -51,8 +51,7 @@ corpus:
 	cd $(RESULTS) && $(PYTHON) ../python/golden_manifest.py $(XDR) $(GOLDEN_P30) $(CORE_P30_COMMIT)
 
 harness:
-	@echo "harness: not implemented yet; go/cmd/hamming-harness replaces the prototype's test-file steps" >&2
-	@exit 1
+	cd go && go run ./cmd/hamming-harness -root $(CURDIR) -cache $(HAMMING_CACHE)
 
 conform:
 	@echo "conform: the SDK conformance runner is not in the imported prototype (docs/PLAN.md says it lives" >&2
