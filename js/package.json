@@ -1,0 +1,9 @@
+{
+  "name": "hamming-js",
+  "private": true,
+  "description": "js-stellar-sdk decoder round-trip for Hamming",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "sdk1740": "npm:@stellar/stellar-sdk@17.4.0"
+  }
+}
