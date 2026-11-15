@@ -1,0 +1,13 @@
+# macOS metadata (external exFAT drives get an AppleDouble ._ file next to every file)
+._*
+.DS_Store
+
+# Pinned upstream inputs, fetched by scripts/fetch-inputs.sh
+.cache/
+
+# Build outputs
+target/
+node_modules/
+__pycache__/
+*.pyc
+*.test
