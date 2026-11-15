@@ -7,8 +7,9 @@ xdr_dir, root = sys.argv[1], sys.argv[2]
 defs, atoms, _ = XS.summarize(xdr_dir)
 dec = XC.Decoder(defs)
 sets = {}
-for d, _, names in os.walk(root):
-    for n in names:
+for d, dirs, names in os.walk(root):
+    dirs.sort()                          # walk order decides greedy ties: make it the same on every OS
+    for n in sorted(names):
         if not n.endswith(".xdr"): continue
         dec.hit = set()
         for fr in XC.frames(os.path.join(d, n)): dec.decode_frame(fr, "LedgerCloseMeta")
