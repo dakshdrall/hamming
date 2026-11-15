@@ -32,6 +32,18 @@ Read from the source at each pinned commit (`git show <sha>:<path>` in the fetch
 | 2026-11-15 | The #729 fix changed the signer column's encoder | `StateChange.SignerAccountID` is `NullAddressBytea` at 2a0a84e and `NullSignerKeyBytea` at 2c87335 | `internal/indexer/types/types.go` |
 | 2026-11-15 | go-stellar-sdk used by wallet-backend | v0.7.3 at 2a0a84e and 2c87335; v0.8.0 at 3e22515 (all `go 1.25.9`) | `go.mod` |
 
+## Decoder error wording the classifier matches
+
+An "unsupported-protocol" verdict rests on recognising these messages; each was observed, not recalled.
+
+| Checked | Decoder | Message | How observed |
+|---|---|---|---|
+| 2026-11-15 | go-stellar-sdk v0.7.3, protocol 30 golden | `decoding StellarValueType: '3' is not a valid StellarValueType enum value` | adapter at wallet-backend 2a0a84e |
+| 2026-11-15 | go-stellar-sdk v0.9.0, unknown enum | `'9' is not a valid SignerKeyType enum value` | `xdr.SafeUnmarshal` (decoded live in `verdict_test.go`) |
+| 2026-11-15 | go-stellar-sdk v0.9.0, unknown int-switched union arm | `union LedgerCloseMeta has invalid V (int32) switch value '7'` | `xdr.SafeUnmarshal` (decoded live in `verdict_test.go`) |
+| 2026-11-15 | js-stellar-sdk 17.4.0, unknown union arm | `LedgerCloseMeta: no case for union discriminator -1` | `js/lcm_rt.js` on a one-frame file |
+| 2026-11-15 | Name of StellarValueType 3 | `STELLAR_VALUE_SIGNED_MS` | `Stellar-ledger.x` at stellar-xdr v30.0 |
+
 ## Protocol constants
 
 | Checked | Fact | Value | Source |
