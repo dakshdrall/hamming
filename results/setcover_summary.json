@@ -1,0 +1,30 @@
+{
+ "files": 866,
+ "atoms": 459,
+ "greedy_cover_files": 51,
+ "max_atoms_in_one_file": 220,
+ "greedy_bound_factor_H(d)": 5.97,
+ "files_forced_by_unique_atoms (lower bound)": 23,
+ "first_5": [
+  [
+   "InvokeHostFunctionTests/4c437318f87437c5.xdr",
+   220
+  ],
+  [
+   "InvokeHostFunctionTests/27003f6cc5cdecc2.xdr",
+   37
+  ],
+  [
+   "FrozenLedgerKeysTests/149be2adcc7eb48e.xdr",
+   24
+  ],
+  [
+   "InvokeHostFunctionTests/6f067a349543093a.xdr",
+   20
+  ],
+  [
+   "InvokeHostFunctionTests/dc4de748a4cb6cdf.xdr",
+   18
+  ]
+ ]
+}
