@@ -2,7 +2,7 @@
 # results/ is edited by hand.
 #
 #   make inputs     fetch pinned upstream inputs into $(HAMMING_CACHE)
-#   make verify     decoder agreement: rs-stellar-xdr, go-stellar-sdk, js-stellar-sdk round-trip every golden
+#   make verify     decoder agreement over every golden (results/decoders.json) and the samples manifest check
 #   make coverage   grammar-decoder atom coverage and the greedy golden-file set cover
 #   make corpus     per-golden-file manifest rows (atoms, sha256, core test) for the corpus builder
 #   make mutated    regenerate corpus/mutated (synthetic entries) from the protocol 28 goldens
@@ -33,12 +33,16 @@ all: inputs verify coverage corpus harness conform
 inputs:
 	scripts/fetch-inputs.sh
 
+# Each decoder round-trips every f2b9194 golden; hamming-verify merges the three rows into one agreement table
+# (results/decoders.json) and exits 1 unless all agree. Then the sample corpus manifest is checked.
 verify:
 	cargo build --release --locked --quiet -p hamming-verify
-	target/release/hamming-verify $(GOLDEN_P30)
-	cd go && go run ./cmd/rt $(GOLDEN_P30)
+	cd go && go run ./cmd/rt -json $(HAMMING_CACHE)/decoders-go.json $(GOLDEN_P30)
 	cd js && npm ci --no-audit --no-fund --silent
-	node js/lcm_rt.js $(GOLDEN_P30)
+	node js/lcm_rt.js --json $(HAMMING_CACHE)/decoders-js.json $(GOLDEN_P30)
+	target/release/hamming-verify --label core-f2b9194/test-lcm-current --out $(RESULTS)/decoders.json \
+		--merge $(HAMMING_CACHE)/decoders-go.json --merge $(HAMMING_CACHE)/decoders-js.json $(GOLDEN_P30)
+	target/release/hamming-verify corpus/samples/manifest.json
 
 coverage:
 	# run from the cache so the summary records core-f2b9194/test-lcm-current, not this machine's path

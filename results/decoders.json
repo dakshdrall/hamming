@@ -1,0 +1,38 @@
+{
+  "agreement": {
+    "all_byte_identical": true,
+    "decoders": 3,
+    "frames": 15306,
+    "same_frame_count": true
+  },
+  "corpus": "core-f2b9194/test-lcm-current",
+  "decoders": [
+    {
+      "bytes": 77898684,
+      "decode_errors": 0,
+      "decoder": "rs-stellar-xdr",
+      "files": 866,
+      "frames": 15306,
+      "mismatches": 0,
+      "version": "30.0.0"
+    },
+    {
+      "bytes": 77898684,
+      "decode_errors": 0,
+      "decoder": "go-stellar-sdk",
+      "files": 866,
+      "frames": 15306,
+      "mismatches": 0,
+      "version": "v0.9.0"
+    },
+    {
+      "bytes": 77898684,
+      "decode_errors": 0,
+      "decoder": "js-stellar-sdk",
+      "files": 866,
+      "frames": 15306,
+      "mismatches": 0,
+      "version": "17.4.0"
+    }
+  ]
+}
