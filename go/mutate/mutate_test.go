@@ -132,6 +132,8 @@ func TestRules(t *testing.T) {
 	}
 }
 
+// Strkey signed payloads are 32 (key) + 4 (length) + n rounded up to a multiple of 4. The prompt's "36 and 100"
+// for n = 1 and 64 was off for n = 1: 36 bytes is n = 0, which go-stellar-sdk's strkey decoder rejects.
 func TestSignedPayloadStrkeyLengths(t *testing.T) {
 	var key xdr.Uint256
 	for n, want := range map[int]int{1: 40, 4: 40, 5: 44, 32: 68, 64: 100} {

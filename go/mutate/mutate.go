@@ -212,6 +212,23 @@ var Rules = []*Rule{
 			"names the unmuxed destination"}, notPreservedCommon...),
 		Apply: muxedPaymentDestination(1<<53 + 1),
 	},
+	{
+		ID: "cap40-signed-payload-len1", Number: 3,
+		Summary:      "CAP-40 signed-payload signer with a 1-byte payload (shortest non-empty)",
+		Method:       "core-golden mutation: as rule 1, with a 1-byte payload; tx hash recomputed with the core test passphrase",
+		Atoms:        []string{"SignerKey|SIGNER_KEY_TYPE_ED25519_SIGNED_PAYLOAD", "SignerKey|SIGNER_KEY_TYPE_ED25519_SIGNED_PAYLOAD.payload<nonempty>"},
+		NotPreserved: notPreservedCommon,
+		Apply:        signedPayloadSigner(1),
+	},
+	{
+		ID: "cap40-signed-payload-len64", Number: 3,
+		Summary: "CAP-40 signed-payload signer with a 64-byte payload (the XDR maximum)",
+		Method: "core-golden mutation: as rule 1, with a 64-byte payload (opaque<64> maximum); tx hash recomputed with the " +
+			"core test passphrase",
+		Atoms:        []string{"SignerKey|SIGNER_KEY_TYPE_ED25519_SIGNED_PAYLOAD", "SignerKey|SIGNER_KEY_TYPE_ED25519_SIGNED_PAYLOAD.payload<max:64>"},
+		NotPreserved: notPreservedCommon,
+		Apply:        signedPayloadSigner(64),
+	},
 }
 
 // Lookup returns the rule with the given id.
