@@ -5,6 +5,7 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -46,15 +47,19 @@ func main() {
 		if err != nil {
 			fail(err)
 		}
-		j, err := json.MarshalIndent(side, "", "  ")
-		if err != nil {
+		// no HTML escaping: atom names such as payload<max:64> should read as written
+		var j bytes.Buffer
+		enc := json.NewEncoder(&j)
+		enc.SetEscapeHTML(false)
+		enc.SetIndent("", "  ")
+		if err := enc.Encode(side); err != nil {
 			fail(err)
 		}
 		base := filepath.Join(*out, res.Name())
 		if err := os.WriteFile(base+".xdr", res.Output, 0o644); err != nil {
 			fail(err)
 		}
-		if err := os.WriteFile(base+".json", append(j, '\n'), 0o644); err != nil {
+		if err := os.WriteFile(base+".json", j.Bytes(), 0o644); err != nil {
 			fail(err)
 		}
 		fmt.Printf("rule %d %-28s %s  <- %s (ledger %d, op %d)\n", r.Number, r.ID, side.SHA256[:12], res.SourcePath, res.LedgerSeq, res.OpIndex)
