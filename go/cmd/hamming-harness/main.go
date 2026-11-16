@@ -93,10 +93,10 @@ func run(root, cache, expPath, outPath string, golden bool) (bool, error) {
 		}
 		for i, f := range facts {
 			v, reason := harness.Classify(f)
-			want := specs[i].Verdicts[label]
 			report.Entries = append(report.Entries, harness.EntryResult{
 				Entry: specs[i].Entry, Issue: specs[i].Issue, Commit: label, Protocols: protocols[specs[i].Entry],
-				Expected: want, Verdict: v, Met: v == want, Reason: reason,
+				Expected: specs[i].Verdicts[label], ExpectedReason: specs[i].Reasons[label], Verdict: v,
+				Met: specs[i].Met(label, v, reason), Reason: reason,
 			})
 		}
 	}

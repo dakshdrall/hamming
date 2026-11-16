@@ -32,9 +32,11 @@ type EntryResult struct {
 	Commit    string   `json:"commit"`
 	Protocols []uint32 `json:"protocols"` // from Hamming's own decode, not the target's
 	Expected  Verdict  `json:"expected"`
-	Verdict   Verdict  `json:"verdict"`
-	Met       bool     `json:"met"`
-	Reason    string   `json:"reason"`
+	// ExpectedReason, if set, is a substring the reason must contain.
+	ExpectedReason string  `json:"expected_reason,omitempty"`
+	Verdict        Verdict `json:"verdict"`
+	Met            bool    `json:"met"`
+	Reason         string  `json:"reason"`
 }
 
 // GoldenResult summarises a golden replay.
@@ -106,8 +108,12 @@ func (r *Report) Finish() {
 	r.Mismatches = []string{}
 	for _, e := range r.Entries {
 		if !e.Met {
+			want := string(e.Expected)
+			if e.ExpectedReason != "" {
+				want += fmt.Sprintf(" with reason containing %q", e.ExpectedReason)
+			}
 			r.Mismatches = append(r.Mismatches, fmt.Sprintf("%s at %s: got %s, expected %s (%s)",
-				e.Entry, e.Commit, e.Verdict, e.Expected, e.Reason))
+				e.Entry, e.Commit, e.Verdict, want, e.Reason))
 		}
 	}
 	if g := r.Golden; g != nil && !g.Met {
