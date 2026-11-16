@@ -289,6 +289,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "hamming-corpus"
+version = "0.1.0"
+dependencies = [
+ "hamming-verify",
+ "serde_json",
+ "sha2 0.11.1",
+]
+
+[[package]]
 name = "hamming-verify"
 version = "0.1.0"
 dependencies = [

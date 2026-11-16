@@ -4,7 +4,7 @@
 #   make inputs     fetch pinned upstream inputs into $(HAMMING_CACHE)
 #   make verify     decoder agreement over every golden (results/decoders.json) and the samples manifest check
 #   make coverage   grammar-decoder atom coverage and the greedy golden-file set cover
-#   make corpus     per-golden-file manifest rows (atoms, sha256, core test) for the corpus builder
+#   make corpus     corpus/v0/manifest.json from the golden cover and corpus/mutated; validated, >= 459 atoms
 #   make mutated    regenerate corpus/mutated (synthetic entries) from the protocol 28 goldens
 #   make harness    replay the corpus through pinned wallet-backend commits and check expectations
 #   make conform    SDK conformance matrix
@@ -54,8 +54,15 @@ coverage:
 		print("coverage: %d/%d atoms, %d decode errors; set cover: %d of %d files" % (c["atoms_covered"], \
 		      c["atoms_total"], c["decode_errors"], s["greedy_cover_files"], s["files"]))'
 
+# Corpus v0: the golden cover (referenced, not copied) plus corpus/mutated. hamming-corpus exits 1 if the
+# manifest does not validate or covers fewer than 459 atoms; hamming-verify then checks every entry's sha256
+# and round-trips every value, reading goldens from $(HAMMING_CACHE).
 corpus:
 	cd $(RESULTS) && $(PYTHON) ../python/golden_manifest.py $(XDR) $(GOLDEN_P30) $(CORE_P30_COMMIT) golden_cover.json
+	cargo build --release --locked --quiet -p hamming-corpus -p hamming-verify
+	target/release/hamming-corpus --golden-manifest $(RESULTS)/core_golden_manifest.json --cover $(RESULTS)/golden_cover.json \
+		--mutated corpus/mutated --schema corpus/manifest.schema.json --out corpus/v0/manifest.json --min-atoms 459
+	target/release/hamming-verify corpus/v0/manifest.json
 
 # Regenerates corpus/mutated from the protocol 28 goldens. Deterministic: CI checks the output matches git.
 mutated:

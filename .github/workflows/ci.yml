@@ -83,7 +83,7 @@ jobs:
       - name: Coverage and set cover
         run: make coverage
 
-      - name: Corpus rows
+      - name: Corpus v0 (fails if the manifest is invalid or covers fewer than 459 atoms)
         run: make corpus
 
       - name: Mutated corpus
@@ -93,4 +93,4 @@ jobs:
         run: make harness
 
       - name: Regenerated results match the committed files
-        run: git diff --exit-code -- results corpus/mutated
+        run: git diff --exit-code -- results corpus
