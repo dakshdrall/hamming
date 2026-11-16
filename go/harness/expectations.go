@@ -33,6 +33,19 @@ type ExpectedEntry struct {
 	Issue      string             `json:"issue,omitempty"`
 	Why        string             `json:"why"`
 	Verdicts   map[string]Verdict `json:"verdicts"` // commit label -> verdict
+	// Reasons optionally pins which failure a verdict must be, by a substring of its reason (commit label ->
+	// substring). Two different bugs can share a verdict: #716's lossy write and #729's rejected write are both
+	// mishandled(persist).
+	Reasons map[string]string `json:"reason_contains,omitempty"`
+}
+
+// Met reports whether a verdict and its reason satisfy the expectation at a commit label.
+func (x ExpectedEntry) Met(label string, v Verdict, reason string) bool {
+	if v != x.Verdicts[label] {
+		return false
+	}
+	want, ok := x.Reasons[label]
+	return !ok || strings.Contains(reason, want)
 }
 
 // GoldenReplay runs every .xdr file under Root through one commit. Every file must get the Expect verdict.
@@ -91,6 +104,11 @@ func (e *Expectations) validate() error {
 			}
 			if err := checkVerdict("entry "+x.Entry, v); err != nil {
 				return err
+			}
+		}
+		for label, sub := range x.Reasons {
+			if _, ok := x.Verdicts[label]; !ok || sub == "" {
+				return fmt.Errorf("entry %q: reason_contains for %q needs a verdict for that commit and a non-empty substring", x.Entry, label)
 			}
 		}
 	}

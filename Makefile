@@ -5,6 +5,7 @@
 #   make verify     decoder agreement: rs-stellar-xdr, go-stellar-sdk, js-stellar-sdk round-trip every golden
 #   make coverage   grammar-decoder atom coverage and the greedy golden-file set cover
 #   make corpus     per-golden-file manifest rows (atoms, sha256, core test) for the corpus builder
+#   make mutated    regenerate corpus/mutated (synthetic entries) from the protocol 28 goldens
 #   make harness    replay the corpus through pinned wallet-backend commits and check expectations
 #   make conform    SDK conformance matrix
 #   make test       unit tests
@@ -19,11 +20,13 @@ export HAMMING_CACHE
 PYTHON ?= python3
 
 CORE_P30_COMMIT := f2b91947fb20fc8174cca38bf320eda7baa3edbb
+CORE_P28_COMMIT := abe1c5541827caaafe023954c224cadeb5dddc44
 GOLDEN_P30 := $(HAMMING_CACHE)/core-f2b9194/test-lcm-current
+GOLDEN_P28 := $(HAMMING_CACHE)/core-abe1c55/test-lcm-current
 XDR := $(HAMMING_CACHE)/stellar-xdr
 RESULTS := $(CURDIR)/results
 
-.PHONY: all inputs verify coverage corpus harness conform test
+.PHONY: all inputs verify coverage corpus mutated harness conform test
 
 all: inputs verify coverage corpus harness conform
 
@@ -49,6 +52,10 @@ coverage:
 
 corpus:
 	cd $(RESULTS) && $(PYTHON) ../python/golden_manifest.py $(XDR) $(GOLDEN_P30) $(CORE_P30_COMMIT)
+
+# Regenerates corpus/mutated from the protocol 28 goldens. Deterministic: CI checks the output matches git.
+mutated:
+	cd go && go run ./cmd/hamming-mutate -golden $(GOLDEN_P28) -core-commit $(CORE_P28_COMMIT) -out $(CURDIR)/corpus/mutated
 
 harness:
 	cd go && go run ./cmd/hamming-harness -root $(CURDIR) -cache $(HAMMING_CACHE)

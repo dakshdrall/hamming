@@ -2,6 +2,7 @@
   "target": "wallet-backend",
   "repo": "https://github.com/stellar/wallet-backend",
   "commits": {
+    "79ea2ac": "79ea2acd1dc65a07166133cc04b12e76db314db0",
     "2a0a84e": "2a0a84ea12523b6c92e278c0c84b443041240095",
     "2c87335": "2c873353c1f0f3c9b145e25a7d009023ad104a1c",
     "3e22515": "3e22515a44979fdc3a558fda3991ca2b48e38cef"
@@ -10,11 +11,16 @@
     {
       "entry": "corpus/mutated/cap40-signed-payload-signer-p28.xdr",
       "issue": "stellar/wallet-backend#729",
-      "why": "A CAP-40 signed-payload signer (P...) has a 68-byte strkey payload; before the fix the signer column encoder accepted only 32-byte account/contract keys, so the ledger indexes but cannot be persisted.",
+      "why": "A CAP-40 signed-payload signer (P...) has a 68-byte strkey payload. At 79ea2ac the signer column encoder silently keeps 32 bytes, so the row reads back undecodable (#716). At 2a0a84e it rejects the value instead, so the ledger indexes but cannot be persisted (#729). 2c87335 stores it.",
       "verdicts": {
+        "79ea2ac": "mishandled(persist)",
         "2a0a84e": "mishandled(persist)",
         "2c87335": "pass",
         "3e22515": "pass"
+      },
+      "reason_contains": {
+        "79ea2ac": "stored lossily",
+        "2a0a84e": "68-byte key payload"
       }
     },
     {
@@ -22,6 +28,59 @@
       "why": "Protocol 30 golden whose ledger headers use STELLAR_VALUE_SIGNED_MS (StellarValueType 3). go-stellar-sdk v0.7.3, used by 2a0a84e, predates that value; v0.8.0, used by 3e22515, decodes it. The harness must report this as a protocol gap, not as a failure.",
       "verdicts": {
         "2a0a84e": "unsupported-protocol",
+        "3e22515": "pass"
+      }
+    },
+    {
+      "entry": "corpus/mutated/cap40-signed-payload-len1-p28.xdr",
+      "issue": "stellar/wallet-backend#716",
+      "why": "Signed-payload signer with a 1-byte payload (40-byte strkey payload). At 79ea2ac it is truncated to 32 bytes on write without error and reads back as a P address that does not decode, the #716 failure. 2a0a84e rejects it (#729); 2c87335 stores it.",
+      "verdicts": {
+        "79ea2ac": "mishandled(persist)",
+        "2a0a84e": "mishandled(persist)",
+        "2c87335": "pass",
+        "3e22515": "pass"
+      },
+      "reason_contains": {
+        "79ea2ac": "stored lossily",
+        "2a0a84e": "key payload"
+      }
+    },
+    {
+      "entry": "corpus/mutated/cap40-signed-payload-len64-p28.xdr",
+      "issue": "stellar/wallet-backend#716",
+      "why": "Signed-payload signer with a 64-byte payload (100-byte strkey payload). At 79ea2ac it is truncated to 32 bytes on write without error and reads back as a P address that does not decode, the #716 failure. 2a0a84e rejects it (#729); 2c87335 stores it.",
+      "verdicts": {
+        "79ea2ac": "mishandled(persist)",
+        "2a0a84e": "mishandled(persist)",
+        "2c87335": "pass",
+        "3e22515": "pass"
+      },
+      "reason_contains": {
+        "79ea2ac": "stored lossily",
+        "2a0a84e": "key payload"
+      }
+    },
+    {
+      "entry": "corpus/mutated/signer-g-and-p-same-key-p28.xdr",
+      "why": "One account holds a G signer and a P signer over the same key. Fails with the other P entries before 2c87335 and passes from it on. docs/PLAN.md ties this case to a follow-up of the #729 fix; no failure distinct from #729 reproduces in this harness, so it is pinned as regression coverage.",
+      "verdicts": {
+        "79ea2ac": "mishandled(persist)",
+        "2a0a84e": "mishandled(persist)",
+        "2c87335": "pass",
+        "3e22515": "pass"
+      },
+      "reason_contains": {
+        "79ea2ac": "stored lossily"
+      }
+    },
+    {
+      "entry": "corpus/mutated/muxed-payment-destination-p28.xdr",
+      "why": "Payment to a muxed (M) destination. Tried against #716 and it does not reproduce: the payment path stores the base account, so no M address reaches an AddressBytea, even at 79ea2ac (no lossy or normalized value is seen). #716's reachable muxed producer is a muxed source on Soroban operations, which this rule does not build. Pinned as regression coverage.",
+      "verdicts": {
+        "79ea2ac": "pass",
+        "2a0a84e": "pass",
+        "2c87335": "pass",
         "3e22515": "pass"
       }
     }

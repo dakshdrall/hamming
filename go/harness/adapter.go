@@ -44,6 +44,9 @@ type Facts struct {
 	PanicCount        int      `json:"panic_count"`
 	PersistErrors     []string `json:"persist_errors,omitempty"`
 	PersistErrorCount int      `json:"persist_error_count"`
+	// Normalized lists stored values that read back different but still valid (e.g. M... stored as G...).
+	Normalized      []string `json:"normalized,omitempty"`
+	NormalizedCount int      `json:"normalized_count"`
 
 	TxInMeta     int `json:"tx_in_meta"`
 	TxIndexed    int `json:"tx_indexed"`

@@ -3,7 +3,8 @@
   "commits": {
     "2a0a84e": "2a0a84ea12523b6c92e278c0c84b443041240095",
     "2c87335": "2c873353c1f0f3c9b145e25a7d009023ad104a1c",
-    "3e22515": "3e22515a44979fdc3a558fda3991ca2b48e38cef"
+    "3e22515": "3e22515a44979fdc3a558fda3991ca2b48e38cef",
+    "79ea2ac": "79ea2acd1dc65a07166133cc04b12e76db314db0"
   },
   "method": "In-process: each target commit runs its own NewIndexer and ProcessLedger on every frame, then persistence is emulated by calling every driver.Valuer field of each buffered transaction, operation and state change (the encoders the database COPY uses). No database is involved.",
   "entries": [
@@ -15,6 +16,7 @@
         28
       ],
       "expected": "mishandled(persist)",
+      "expected_reason": "68-byte key payload",
       "verdict": "mishandled(persist)",
       "met": true,
       "reason": "cannot be persisted (1): StateChange.SignerAccountID: stellar address PCEDCRZF3WHS3R6CWJ3WFILROPR6U6KR27B5SW6XYISELPLKW347MAAAAAQKXK5LVOV2XK5LVOV2XK5LVOV2XK5LVOV2XK5LVOV2XK5LVOV2XK2COE has a 68-byte key payload; the account_id column stores only 32-byte account/contract keys"
@@ -31,6 +33,54 @@
       "reason": "2 of 2 frames use values the target's XDR does not know: decoding LedgerCloseMetaV2: decoding LedgerHeaderHistoryEntry: decoding LedgerHeader: decoding StellarValue: decoding StellarValueExt: decoding StellarValueType: '3' is not a valid StellarValueType enum value"
     },
     {
+      "entry": "corpus/mutated/cap40-signed-payload-len1-p28.xdr",
+      "issue": "stellar/wallet-backend#716",
+      "commit": "2a0a84e",
+      "protocols": [
+        28
+      ],
+      "expected": "mishandled(persist)",
+      "expected_reason": "key payload",
+      "verdict": "mishandled(persist)",
+      "met": true,
+      "reason": "cannot be persisted (1): StateChange.SignerAccountID: stellar address PCEDCRZF3WHS3R6CWJ3WFILROPR6U6KR27B5SW6XYISELPLKW347MAAAAAA2WAAAADDX4 has a 40-byte key payload; the account_id column stores only 32-byte account/contract keys"
+    },
+    {
+      "entry": "corpus/mutated/cap40-signed-payload-len64-p28.xdr",
+      "issue": "stellar/wallet-backend#716",
+      "commit": "2a0a84e",
+      "protocols": [
+        28
+      ],
+      "expected": "mishandled(persist)",
+      "expected_reason": "key payload",
+      "verdict": "mishandled(persist)",
+      "met": true,
+      "reason": "cannot be persisted (1): StateChange.SignerAccountID: stellar address PCEDCRZF3WHS3R6CWJ3WFILROPR6U6KR27B5SW6XYISELPLKW347MAAAABAKXK5LVOV2XK5LVOV2XK5LVOV2XK5LVOV2XK5LVOV2XK5LVOV2XK5LVOV2XK5LVOV2XK5LVOV2XK5LVOV2XK5LVOV2XK5LVOV2XK5LVOSYO has a 100-byte key payload; the account_id column stores only 32-byte account/contract ke"
+    },
+    {
+      "entry": "corpus/mutated/signer-g-and-p-same-key-p28.xdr",
+      "commit": "2a0a84e",
+      "protocols": [
+        28
+      ],
+      "expected": "mishandled(persist)",
+      "verdict": "mishandled(persist)",
+      "met": true,
+      "reason": "cannot be persisted (1): StateChange.SignerAccountID: stellar address PBUSVINSYSCZ2U3IVAEDO6HJ3U3T7XKJMP2XAGPALOWOGHEL7KZKIAAAAAQKXK5LVOV2XK5LVOV2XK5LVOV2XK5LVOV2XK5LVOV2XK5LVOV2XK476A has a 68-byte key payload; the account_id column stores only 32-byte account/contract keys"
+    },
+    {
+      "entry": "corpus/mutated/muxed-payment-destination-p28.xdr",
+      "commit": "2a0a84e",
+      "protocols": [
+        28
+      ],
+      "expected": "pass",
+      "verdict": "pass",
+      "met": true,
+      "reason": "1 ledgers, 1 transactions, 1 operations, 3 state changes"
+    },
+    {
       "entry": "corpus/mutated/cap40-signed-payload-signer-p28.xdr",
       "issue": "stellar/wallet-backend#729",
       "commit": "2c87335",
@@ -41,6 +91,52 @@
       "verdict": "pass",
       "met": true,
       "reason": "1 ledgers, 1 transactions, 3 operations, 2 state changes"
+    },
+    {
+      "entry": "corpus/mutated/cap40-signed-payload-len1-p28.xdr",
+      "issue": "stellar/wallet-backend#716",
+      "commit": "2c87335",
+      "protocols": [
+        28
+      ],
+      "expected": "pass",
+      "verdict": "pass",
+      "met": true,
+      "reason": "1 ledgers, 1 transactions, 3 operations, 2 state changes"
+    },
+    {
+      "entry": "corpus/mutated/cap40-signed-payload-len64-p28.xdr",
+      "issue": "stellar/wallet-backend#716",
+      "commit": "2c87335",
+      "protocols": [
+        28
+      ],
+      "expected": "pass",
+      "verdict": "pass",
+      "met": true,
+      "reason": "1 ledgers, 1 transactions, 3 operations, 2 state changes"
+    },
+    {
+      "entry": "corpus/mutated/signer-g-and-p-same-key-p28.xdr",
+      "commit": "2c87335",
+      "protocols": [
+        28
+      ],
+      "expected": "pass",
+      "verdict": "pass",
+      "met": true,
+      "reason": "1 ledgers, 1 transactions, 1 operations, 2 state changes"
+    },
+    {
+      "entry": "corpus/mutated/muxed-payment-destination-p28.xdr",
+      "commit": "2c87335",
+      "protocols": [
+        28
+      ],
+      "expected": "pass",
+      "verdict": "pass",
+      "met": true,
+      "reason": "1 ledgers, 1 transactions, 1 operations, 3 state changes"
     },
     {
       "entry": "corpus/mutated/cap40-signed-payload-signer-p28.xdr",
@@ -64,6 +160,114 @@
       "verdict": "pass",
       "met": true,
       "reason": "2 ledgers, 2 transactions, 2 operations, 6 state changes"
+    },
+    {
+      "entry": "corpus/mutated/cap40-signed-payload-len1-p28.xdr",
+      "issue": "stellar/wallet-backend#716",
+      "commit": "3e22515",
+      "protocols": [
+        28
+      ],
+      "expected": "pass",
+      "verdict": "pass",
+      "met": true,
+      "reason": "1 ledgers, 1 transactions, 3 operations, 2 state changes"
+    },
+    {
+      "entry": "corpus/mutated/cap40-signed-payload-len64-p28.xdr",
+      "issue": "stellar/wallet-backend#716",
+      "commit": "3e22515",
+      "protocols": [
+        28
+      ],
+      "expected": "pass",
+      "verdict": "pass",
+      "met": true,
+      "reason": "1 ledgers, 1 transactions, 3 operations, 2 state changes"
+    },
+    {
+      "entry": "corpus/mutated/signer-g-and-p-same-key-p28.xdr",
+      "commit": "3e22515",
+      "protocols": [
+        28
+      ],
+      "expected": "pass",
+      "verdict": "pass",
+      "met": true,
+      "reason": "1 ledgers, 1 transactions, 1 operations, 2 state changes"
+    },
+    {
+      "entry": "corpus/mutated/muxed-payment-destination-p28.xdr",
+      "commit": "3e22515",
+      "protocols": [
+        28
+      ],
+      "expected": "pass",
+      "verdict": "pass",
+      "met": true,
+      "reason": "1 ledgers, 1 transactions, 1 operations, 3 state changes"
+    },
+    {
+      "entry": "corpus/mutated/cap40-signed-payload-signer-p28.xdr",
+      "issue": "stellar/wallet-backend#729",
+      "commit": "79ea2ac",
+      "protocols": [
+        28
+      ],
+      "expected": "mishandled(persist)",
+      "expected_reason": "stored lossily",
+      "verdict": "mishandled(persist)",
+      "met": true,
+      "reason": "cannot be persisted (1): StateChange.SignerAccountID: PCEDCRZF3WHS3R6CWJ3WFILROPR6U6KR27B5SW6XYISELPLKW347MAAAAAQKXK5LVOV2XK5LVOV2XK5LVOV2XK5LVOV2XK5LVOV2XK5LVOV2XK2COE is stored lossily and reads back as PCEDCRZF3WHS3R6CWJ3WFILROPR6U6KR27B5SW6XYISELPLKW347MCY5, which does not decode: invalid signed payload length 32, expec"
+    },
+    {
+      "entry": "corpus/mutated/cap40-signed-payload-len1-p28.xdr",
+      "issue": "stellar/wallet-backend#716",
+      "commit": "79ea2ac",
+      "protocols": [
+        28
+      ],
+      "expected": "mishandled(persist)",
+      "expected_reason": "stored lossily",
+      "verdict": "mishandled(persist)",
+      "met": true,
+      "reason": "cannot be persisted (1): StateChange.SignerAccountID: PCEDCRZF3WHS3R6CWJ3WFILROPR6U6KR27B5SW6XYISELPLKW347MAAAAAA2WAAAADDX4 is stored lossily and reads back as PCEDCRZF3WHS3R6CWJ3WFILROPR6U6KR27B5SW6XYISELPLKW347MCY5, which does not decode: invalid signed payload length 32, expected at least 36"
+    },
+    {
+      "entry": "corpus/mutated/cap40-signed-payload-len64-p28.xdr",
+      "issue": "stellar/wallet-backend#716",
+      "commit": "79ea2ac",
+      "protocols": [
+        28
+      ],
+      "expected": "mishandled(persist)",
+      "expected_reason": "stored lossily",
+      "verdict": "mishandled(persist)",
+      "met": true,
+      "reason": "cannot be persisted (1): StateChange.SignerAccountID: PCEDCRZF3WHS3R6CWJ3WFILROPR6U6KR27B5SW6XYISELPLKW347MAAAABAKXK5LVOV2XK5LVOV2XK5LVOV2XK5LVOV2XK5LVOV2XK5LVOV2XK5LVOV2XK5LVOV2XK5LVOV2XK5LVOV2XK5LVOV2XK5LVOV2XK5LVOSYO is stored lossily and reads back as PCEDCRZF3WHS3R6CWJ3WFILROPR6U6KR27B5SW6XYISELPLKW347MCY5, which does "
+    },
+    {
+      "entry": "corpus/mutated/signer-g-and-p-same-key-p28.xdr",
+      "commit": "79ea2ac",
+      "protocols": [
+        28
+      ],
+      "expected": "mishandled(persist)",
+      "expected_reason": "stored lossily",
+      "verdict": "mishandled(persist)",
+      "met": true,
+      "reason": "cannot be persisted (1): StateChange.SignerAccountID: PBUSVINSYSCZ2U3IVAEDO6HJ3U3T7XKJMP2XAGPALOWOGHEL7KZKIAAAAAQKXK5LVOV2XK5LVOV2XK5LVOV2XK5LVOV2XK5LVOV2XK5LVOV2XK476A is stored lossily and reads back as PBUSVINSYSCZ2U3IVAEDO6HJ3U3T7XKJMP2XAGPALOWOGHEL7KZKI4XF, which does not decode: invalid signed payload length 32, expec"
+    },
+    {
+      "entry": "corpus/mutated/muxed-payment-destination-p28.xdr",
+      "commit": "79ea2ac",
+      "protocols": [
+        28
+      ],
+      "expected": "pass",
+      "verdict": "pass",
+      "met": true,
+      "reason": "1 ledgers, 1 transactions, 1 operations, 3 state changes"
     }
   ],
   "golden_replay": {
@@ -80,6 +284,7 @@
     "index_errors": 0,
     "panics": 0,
     "persist_errors": 0,
+    "normalized": 0,
     "crashes": 0,
     "verdicts": {
       "pass": 866

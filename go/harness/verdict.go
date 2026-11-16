@@ -82,8 +82,12 @@ func Classify(f Facts) (Verdict, string) {
 		return Dropped, fmt.Sprintf("indexed %d of %d transactions and %d of %d operations",
 			f.TxIndexed, f.TxInMeta, f.OpsIndexed, f.OpsInMeta)
 	}
-	return Pass, fmt.Sprintf("%d ledgers, %d transactions, %d operations, %d state changes",
+	reason := fmt.Sprintf("%d ledgers, %d transactions, %d operations, %d state changes",
 		f.Ledgers, f.TxIndexed, f.OpsIndexed, f.StateChanges)
+	if f.NormalizedCount > 0 {
+		reason += fmt.Sprintf("; %d stored values read back normalized, e.g. %s", f.NormalizedCount, first(f.Normalized))
+	}
+	return Pass, reason
 }
 
 func first(msgs []string) string {

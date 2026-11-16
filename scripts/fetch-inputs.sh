@@ -22,6 +22,7 @@ XDR_TAG=v30.0
 XDR_COMMIT=4f524bbac80c781c06e4fb5fc93a2d0d331d6705
 WB_URL=https://github.com/stellar/wallet-backend
 WB_COMMITS=(
+  79ea2acd1dc65a07166133cc04b12e76db314db0 # 79ea2ac: before #693, which ended #716's silent truncation
   2a0a84ea12523b6c92e278c0c84b443041240095 # 2a0a84e: before the #729 fix
   2c873353c1f0f3c9b145e25a7d009023ad104a1c # 2c87335: the #729 fix
   3e22515a44979fdc3a558fda3991ca2b48e38cef # 3e22515: HEAD on 2026-11-12
