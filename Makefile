@@ -55,7 +55,7 @@ coverage:
 		      c["atoms_total"], c["decode_errors"], s["greedy_cover_files"], s["files"]))'
 
 corpus:
-	cd $(RESULTS) && $(PYTHON) ../python/golden_manifest.py $(XDR) $(GOLDEN_P30) $(CORE_P30_COMMIT)
+	cd $(RESULTS) && $(PYTHON) ../python/golden_manifest.py $(XDR) $(GOLDEN_P30) $(CORE_P30_COMMIT) golden_cover.json
 
 # Regenerates corpus/mutated from the protocol 28 goldens. Deterministic: CI checks the output matches git.
 mutated:
