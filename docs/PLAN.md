@@ -55,8 +55,11 @@ stored, as wallet-backend does.
 | C contract | ContractID (32) | 32 | 33 |
 | M muxed account | **(id u64, ed25519)** | **ed25519 ‖ id = 40** | 41 |
 | W muxed contract (CAP-84) | **(id u64, contractId)** | **contractId ‖ id = 40** | 41 |
-| P signed payload (CAP-40) | ed25519 ‖ opaque<64> | 32 + 4 + pad₄(n), n ≤ 64 → **36…100** | **37…101** |
+| P signed payload (CAP-40) | ed25519 ‖ opaque<64> | 32 + 4 + pad₄(n), 1 ≤ n ≤ 64 → **40…100** | **41…101** |
 
+- **P range.** pad₄(n) rounds n up to a multiple of 4, so n = 1 gives 40 bytes, not 36. XDR allows an empty
+  payload, but go-stellar-sdk's strkey decoder rejects it ("must be between 1 and 64"), so 36 bytes is never
+  a valid strkey (`TestSignedPayloadStrkeyLengths` in go/mutate).
 - **P check.** A 32-byte payload gives 68 bytes, the exact figure in the pre-fix error. A 64-byte payload gives
   101 stored bytes, the exact bound in wallet-backend's fix commit ("up to 101 bytes for P... keys").
 - **Field-order trap.** In XDR the id comes **first**; in the strkey it comes **last** (CAP-84, SEP-23). Any
@@ -105,7 +108,7 @@ stored, as wallet-backend does.
 | # | Rule | Targets |
 |---|---|---|
 | 2 | G → M on a payment destination / tx source (40-byte payload) | wallet-backend#716 class, js#1785 class |
-| 3 | P payload length 1 and 64 (36- and 100-byte strkey payloads) | Max-length atoms, the 101-byte bound |
+| 3 | P payload length 1 and 64 (40- and 100-byte strkey payloads) | Max-length atoms, the 101-byte bound |
 | 4 | Add a G signer and a P signer over the same key in one account | The relational case from the #729 follow-up |
 | 5 | SAC transfer creating a trustline (look for an existing CAP-73 golden first) | wallet-backend#731 |
 
