@@ -30,4 +30,4 @@ harness for indexers, an SDK conformance runner, a Go linter and a hardening gui
 - stellar-core f2b9194: test-lcm-current, protocol 30 goldens
 - stellar-core abe1c55: test-lcm-current, protocol 28 goldens
 - stellar-xdr tag v30.0
-- wallet-backend 2a0a84e (pre-fix #729), 2c87335 (#729 fix), 3e22515 (HEAD 2026-11-12)
+- wallet-backend 79ea2ac (pre-fix #716), 2a0a84e (pre-fix #729), 2c87335 (#729 fix), 3e22515 (HEAD 2026-11-12)
