@@ -53,8 +53,8 @@ jobs:
         with:
           path: |
             ~/.cargo/registry
-            rust/verify/target
-          key: cargo-${{ env.RUST_VERSION }}-${{ hashFiles('rust/verify/Cargo.lock') }}
+            target
+          key: cargo-${{ env.RUST_VERSION }}-${{ hashFiles('Cargo.lock') }}
 
       - uses: actions/setup-node@v7
         with:
