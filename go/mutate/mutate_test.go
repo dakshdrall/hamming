@@ -70,6 +70,22 @@ func writeDir(t *testing.T, name string, b []byte) string {
 	return dir
 }
 
+func TestRulesDeclareLevelAndCaps(t *testing.T) {
+	ids := map[string]bool{}
+	for _, r := range Rules {
+		if r.Level != "structural" && r.Level != "value" && r.Level != "relational" {
+			t.Errorf("rule %s: level %q", r.ID, r.Level)
+		}
+		if len(r.Caps) == 0 {
+			t.Errorf("rule %s: no CAPs", r.ID)
+		}
+		if ids[r.ID] {
+			t.Errorf("rule id %s used twice", r.ID)
+		}
+		ids[r.ID] = true
+	}
+}
+
 func TestRule1ReproducesCommittedEntry(t *testing.T) {
 	golden, _ := inputs(t)
 	res, err := Run(Rules[0], golden, CorePassphrase)

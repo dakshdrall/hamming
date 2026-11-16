@@ -2,6 +2,11 @@
   "id": "muxed-payment-destination-p28",
   "rule": "muxed-payment-destination",
   "rule_number": 2,
+  "summary": "G -> M payment destination (muxed id 2^53+1), envelope only",
+  "level": "structural",
+  "caps": [
+    "CAP-0027"
+  ],
   "synthetic": true,
   "method": "core-golden mutation: the destination of a successful Payment is rewritten from an ed25519 account (G) to a muxed account (M) over the same key with id 2^53+1, in the envelope only; tx hash recomputed with the core test passphrase",
   "source": {
