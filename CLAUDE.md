@@ -24,7 +24,9 @@ harness for indexers, an SDK conformance runner, a Go linter and a hardening gui
 ## Honesty in data
 - Entries derived from core goldens by mutation are synthetic: true, with method and source recorded.
 - Persistence is emulated with the target's own encoders unless a real database run is added; say so.
-- Don't mention py-stellar-base findings anywhere until the maintainers have the reports.
+- A finding that changes a decoded value, or could halt or corrupt a pipeline, is reported privately before it
+  appears here. Until the maintainers respond: no results file, test name, commit message, issue or PR that
+  identifies it. Generic tools and results for unaffected libraries are fine.
 
 ## Pinned inputs (verify each resolves; record in FACTS.md)
 - stellar-core f2b9194: test-lcm-current, protocol 30 goldens
