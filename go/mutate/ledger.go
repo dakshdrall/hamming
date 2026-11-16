@@ -1,6 +1,7 @@
 package mutate
 
 import (
+	"bytes"
 	"encoding/binary"
 	"fmt"
 	"os"
@@ -225,4 +226,54 @@ func CheckHashes(lcm *xdr.LedgerCloseMeta, passphrase string) error {
 		}
 	}
 	return nil
+}
+
+// signerKeyLess is stellar-core's SignerKey operator< (xdrpp): discriminant first, then the arm's fields in
+// order, with variable-length opaque compared like std::vector (bytewise, shorter prefix first).
+func signerKeyLess(a, b xdr.SignerKey) bool {
+	if a.Type != b.Type {
+		return a.Type < b.Type
+	}
+	switch a.Type {
+	case xdr.SignerKeyTypeSignerKeyTypeEd25519:
+		return bytes.Compare(a.Ed25519[:], b.Ed25519[:]) < 0
+	case xdr.SignerKeyTypeSignerKeyTypePreAuthTx:
+		return bytes.Compare(a.PreAuthTx[:], b.PreAuthTx[:]) < 0
+	case xdr.SignerKeyTypeSignerKeyTypeHashX:
+		return bytes.Compare(a.HashX[:], b.HashX[:]) < 0
+	case xdr.SignerKeyTypeSignerKeyTypeEd25519SignedPayload:
+		pa, pb := a.Ed25519SignedPayload, b.Ed25519SignedPayload
+		if c := bytes.Compare(pa.Ed25519[:], pb.Ed25519[:]); c != 0 {
+			return c < 0
+		}
+		return bytes.Compare(pa.Payload, pb.Payload) < 0
+	}
+	return false
+}
+
+// sortSigners restores core's signer order, moving each signerSponsoringIDs element with its signer.
+func sortSigners(acc *xdr.AccountEntry) {
+	var ids []xdr.SponsorshipDescriptor
+	if v2, ok := acc.Ext.GetV1(); ok {
+		if e2, ok := v2.Ext.GetV2(); ok {
+			ids = e2.SignerSponsoringIDs
+		}
+	}
+	idx := make([]int, len(acc.Signers))
+	for i := range idx {
+		idx[i] = i
+	}
+	sort.SliceStable(idx, func(i, j int) bool { return signerKeyLess(acc.Signers[idx[i]].Key, acc.Signers[idx[j]].Key) })
+	signers := make([]xdr.Signer, len(idx))
+	for i, k := range idx {
+		signers[i] = acc.Signers[k]
+	}
+	copy(acc.Signers, signers)
+	if len(ids) == len(idx) {
+		sorted := make([]xdr.SponsorshipDescriptor, len(idx))
+		for i, k := range idx {
+			sorted[i] = ids[k]
+		}
+		copy(ids, sorted)
+	}
 }

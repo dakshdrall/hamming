@@ -44,6 +44,17 @@ An "unsupported-protocol" verdict rests on recognising these messages; each was 
 | 2026-11-15 | js-stellar-sdk 17.4.0, unknown union arm | `LedgerCloseMeta: no case for union discriminator -1` | `js/lcm_rt.js` on a one-frame file |
 | 2026-11-15 | Name of StellarValueType 3 | `STELLAR_VALUE_SIGNED_MS` | `Stellar-ledger.x` at stellar-xdr v30.0 |
 
+## Mutation rules
+
+| Checked | Fact | Value | Source |
+|---|---|---|---|
+| 2026-11-15 | Order of an account's signers | kept sorted by `SignerKey operator<`: a new signer is inserted at the first position where `!(x.key < key)`, and `signerSponsoringIDs` gets an element at the same index | `findSignerByKey` in `src/transactions/TransactionUtils.h:41` and `addOrChangeSigner` in `src/transactions/SetOptionsOpFrame.cpp:70` at abe1c55 |
+| 2026-11-15 | Strkey payload of a signed-payload signer (n payload bytes) | 32 + 4 + n rounded up to a multiple of 4: n=1 -> 40, n=32 -> 68, n=64 -> 100 | `TestSignedPayloadStrkeyLengths` (go-stellar-sdk v0.9.0) |
+| 2026-11-15 | Empty signed payload | XDR allows it (`opaque payload<64>`), but go-stellar-sdk's strkey decoder rejects it: "signed payload declares 0 payload bytes, must be between 1 and 64" | `TestSignedPayloadStrkeyLengths` |
+| 2026-11-15 | Strkey payload of a muxed account | 40 bytes (32-byte key + 8-byte id) | rule 2 sidecar (`strkey.Decode`) |
+| 2026-11-15 | Coverage atom names for integer boundaries | named after the typedef, not the field: a muxed id above 2^53 is `uint64#2^53+1` | `python/xdr_coverage.py` on the rule 2 output |
+| 2026-11-15 | Atoms absent from the protocol 30 goldens that the mutations add | `MuxedAccount\|KEY_TYPE_MUXED_ED25519`, `SignerKey\|SIGNER_KEY_TYPE_ED25519_SIGNED_PAYLOAD` and its `payload<nonempty>` / `payload<max:64>` | `results/coverage_test-lcm-current.json` (missing list) |
+
 ## Protocol constants
 
 | Checked | Fact | Value | Source |

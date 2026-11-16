@@ -229,6 +229,17 @@ var Rules = []*Rule{
 		NotPreserved: notPreservedCommon,
 		Apply:        signedPayloadSigner(64),
 	},
+	{
+		ID: "signer-g-and-p-same-key", Number: 4,
+		Summary: "one account holds a G signer and a P signer over the same ed25519 key",
+		Method: "core-golden mutation: a successful SetOptions adds an ed25519 signer K2 to an account that already has an " +
+			"ed25519 signer K1; K2 is rewritten to a CAP-40 signed-payload signer over K1 (32-byte payload) in the envelope " +
+			"and in every entry of that account in the ledger's meta, with signers (and signerSponsoringIDs) re-sorted in " +
+			"core's SignerKey order; tx hash recomputed with the core test passphrase",
+		Atoms:        []string{"SignerKey|SIGNER_KEY_TYPE_ED25519_SIGNED_PAYLOAD", "AccountEntry.signers[len>1]"},
+		NotPreserved: notPreservedCommon,
+		Apply:        gAndPSameKey(32),
+	},
 }
 
 // Lookup returns the rule with the given id.
@@ -317,6 +328,93 @@ func muxedPaymentDestination(id uint64) func(c *Candidate) (int, map[string]any,
 			}
 			return oi, map[string]any{"destination_before": before, "destination_after": after, "muxed_id": id,
 				"strkey_payload_bytes": len(raw)}, true
+		}
+		return 0, nil, false
+	}
+}
+
+// gAndPSameKey is rule 4.
+func gAndPSameKey(n int) func(c *Candidate) (int, map[string]any, bool) {
+	return func(c *Candidate) (int, map[string]any, bool) {
+		ops := c.Env.Operations()
+		for oi := range ops {
+			so := ops[oi].Body.SetOptionsOp
+			if so == nil || so.Signer == nil || so.Signer.Key.Type != xdr.SignerKeyTypeSignerKeyTypeEd25519 || so.Signer.Weight == 0 {
+				continue
+			}
+			k2 := *so.Signer.Key.Ed25519
+			// The account the signer is added to: its pre-state (State) lacks K2 and its post-state has it.
+			var account *xdr.AccountId
+			var k1 *xdr.Uint256
+			changes := opChanges(c.Meta, oi)
+			for ci := range changes {
+				st := changes[ci].State
+				if st == nil || st.Data.Account == nil {
+					continue
+				}
+				acc := st.Data.Account
+				hasK2 := false
+				var first *xdr.Uint256
+				for si := range acc.Signers {
+					s := acc.Signers[si].Key
+					if s.Type != xdr.SignerKeyTypeSignerKeyTypeEd25519 {
+						continue
+					}
+					if *s.Ed25519 == k2 {
+						hasK2 = true
+					} else if first == nil {
+						v := *s.Ed25519
+						first = &v
+					}
+				}
+				if !hasK2 && first != nil {
+					id := acc.AccountId
+					account, k1 = &id, first
+					break
+				}
+			}
+			if account == nil {
+				continue
+			}
+			newKey := signedPayloadKey(*k1, n)
+			addr, plen, err := strkeyPayloadLen(newKey)
+			if err != nil {
+				continue
+			}
+			// Rewrite K2 -> P(K1) in every entry of this account in the ledger. K2 is absent from the account
+			// before this operation, so every entry holding it comes from this operation or later.
+			edits := 0
+			for _, a := range processing(c.LCM) {
+				lists := append([]xdr.LedgerEntryChanges{a.Fee}, txChanges(a.Meta)...)
+				for _, list := range lists {
+					for ci := range list {
+						le := entryOf(&list[ci])
+						if le == nil || le.Data.Account == nil || !le.Data.Account.AccountId.Equals(*account) {
+							continue
+						}
+						changed := false
+						for si := range le.Data.Account.Signers {
+							s := &le.Data.Account.Signers[si]
+							if s.Key.Type == xdr.SignerKeyTypeSignerKeyTypeEd25519 && *s.Key.Ed25519 == k2 {
+								s.Key = newKey
+								changed = true
+								edits++
+							}
+						}
+						if changed {
+							sortSigners(le.Data.Account)
+						}
+					}
+				}
+			}
+			if edits == 0 {
+				continue
+			}
+			so.Signer.Key = newKey
+			g, _ := strkey.Encode(strkey.VersionByteAccountID, k1[:])
+			return oi, map[string]any{"account": account.Address(), "g_signer": g, "p_signer": addr,
+				"payload_bytes": n, "strkey_payload_bytes": plen, "replaced_ed25519_signer_key": hex.EncodeToString(k2[:]),
+				"meta_signer_edits": edits}, true
 		}
 		return 0, nil, false
 	}

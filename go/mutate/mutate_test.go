@@ -147,6 +147,71 @@ func TestSignedPayloadStrkeyLengths(t *testing.T) {
 	}
 }
 
+func TestRule4HoldsGAndPOverOneKey(t *testing.T) {
+	golden, _ := inputs(t)
+	r, _ := Lookup("signer-g-and-p-same-key")
+	res, err := Run(r, golden, CorePassphrase)
+	if err != nil {
+		t.Fatal(err)
+	}
+	frames, _ := Frames(res.Output)
+	var lcm xdr.LedgerCloseMeta
+	if err := xdr.SafeUnmarshal(frames[0], &lcm); err != nil {
+		t.Fatal(err)
+	}
+	found := false
+	for _, a := range processing(&lcm) {
+		for _, list := range txChanges(a.Meta) {
+			for ci := range list {
+				le := entryOf(&list[ci])
+				if le == nil || le.Data.Account == nil {
+					continue
+				}
+				acc := le.Data.Account
+				g := map[xdr.Uint256]bool{}
+				for _, s := range acc.Signers {
+					if s.Key.Type == xdr.SignerKeyTypeSignerKeyTypeEd25519 {
+						g[*s.Key.Ed25519] = true
+					}
+				}
+				for i, s := range acc.Signers {
+					if i > 0 && signerKeyLess(s.Key, acc.Signers[i-1].Key) {
+						t.Errorf("account %s: signers out of core's order", acc.AccountId.Address())
+					}
+					if p := s.Key.Ed25519SignedPayload; p != nil && g[p.Ed25519] {
+						found = true
+					}
+				}
+			}
+		}
+	}
+	if !found {
+		t.Fatal("no account entry holds a G signer and a P signer over the same key")
+	}
+}
+
+func TestSortSignersMovesSponsoringIDs(t *testing.T) {
+	k := func(b byte) xdr.Uint256 { var u xdr.Uint256; u[0] = b; return u }
+	ed := func(b byte) xdr.SignerKey {
+		u := k(b)
+		return xdr.SignerKey{Type: xdr.SignerKeyTypeSignerKeyTypeEd25519, Ed25519: &u}
+	}
+	sponsor := xdr.MustAddress("GBIFX2QKGC6J4VRBEQDJZJSFZA43IQK2CYR3BF473UFC7VMSOOM2Z7SX")
+	acc := xdr.AccountEntry{
+		Signers: []xdr.Signer{{Key: signedPayloadKey(k(1), 4), Weight: 1}, {Key: ed(9), Weight: 2}, {Key: ed(3), Weight: 3}},
+		Ext: xdr.AccountEntryExt{V: 1, V1: &xdr.AccountEntryExtensionV1{Ext: xdr.AccountEntryExtensionV1Ext{V: 2,
+			V2: &xdr.AccountEntryExtensionV2{SignerSponsoringIDs: []xdr.SponsorshipDescriptor{nil, &sponsor, nil}}}}},
+	}
+	sortSigners(&acc)
+	if w := []xdr.Uint32{3, 2, 1}; acc.Signers[0].Weight != w[0] || acc.Signers[1].Weight != w[1] || acc.Signers[2].Weight != w[2] {
+		t.Fatalf("order by weight marker: %d %d %d, want 3 2 1", acc.Signers[0].Weight, acc.Signers[1].Weight, acc.Signers[2].Weight)
+	}
+	ids := acc.Ext.V1.Ext.V2.SignerSponsoringIDs
+	if ids[0] != nil || ids[1] == nil || ids[2] != nil {
+		t.Errorf("sponsoring IDs did not move with their signers: %v", ids)
+	}
+}
+
 func TestCheckHashesDetectsStaleResultHash(t *testing.T) {
 	b, err := os.ReadFile(filepath.Join("..", "..", "corpus", "mutated", "cap40-signed-payload-signer-p28.xdr"))
 	if err != nil {
