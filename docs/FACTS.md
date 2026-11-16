@@ -79,6 +79,12 @@ An "unsupported-protocol" verdict rests on recognising these messages; each was 
 | 2026-11-15 | Latest stable Go | go1.27.4 (released 2026-11-02) | https://go.dev/VERSION?m=text |
 | 2026-11-15 | go-stellar-sdk used by `go/` | v0.9.0 | `go/go.mod` |
 | 2026-11-15 | rs-stellar-xdr used by `rust/verify` | stellar-xdr 30.0.0 | `rust/verify/Cargo.lock` |
+| 2026-11-16 | CI Go | 1.27.4 (latest stable) | https://go.dev/VERSION?m=text |
+| 2026-11-16 | CI Rust | 1.100.0, stable channel, released 2026-11-09 | https://static.rust-lang.org/dist/channel-rust-stable.toml |
+| 2026-11-16 | CI Node.js | 26.13.1 (newest non-prerelease, an LTS release, 2026-11-10) | https://nodejs.org/dist/index.json |
+| 2026-11-16 | CI Python | 3.15.2 (latest stable, 2026-10-25) | https://endoflife.date/api/python.json |
+| 2026-11-16 | GitHub Actions used | actions/checkout v7, setup-go v7, setup-node v7, setup-python v7, cache v6 (latest releases) | `gh api repos/<action>/releases/latest` |
+| 2026-11-16 | CI runner | `ubuntu-24.04`, which `ubuntu-latest` points to | https://github.com/actions/runner-images (README) |
 | 2026-11-15 | js-stellar-sdk used by `js/` | @stellar/stellar-sdk 17.4.0, npm `latest` tag, published 2026-10-25 | `npm view @stellar/stellar-sdk dist-tags time` |
 
 ## Measured baselines
