@@ -1,0 +1,96 @@
+# Runs the whole pipeline from pinned inputs on every pull request and every push to main. The job fails if a
+# decoder disagrees, a unit test fails, a harness expectation is not met, or a regenerated result differs from
+# the committed one.
+#
+# Toolchain versions are pinned to the current stable releases (docs/FACTS.md records where each was checked).
+# make conform is not run: the SDK conformance runner is not in the repository yet (see the Makefile).
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  GO_VERSION: "1.27.4"
+  RUST_VERSION: "1.100.0"
+  NODE_VERSION: "26.13.1"
+  PYTHON_VERSION: "3.15.2"
+
+jobs:
+  pipeline:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      HAMMING_CACHE: ${{ github.workspace }}/.cache
+      # tests that need the fetched inputs fail instead of skipping
+      HAMMING_REQUIRE_INPUTS: "1"
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-go@v7
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          # wallet-backend's modules are downloaded inside its worktrees, so key the module and build caches on
+          # the pinned commits too
+          cache-dependency-path: |
+            go/go.sum
+            adapters/wallet-backend/expectations.json
+
+      - name: Rust toolchain
+        run: |
+          rustup toolchain install "$RUST_VERSION" --profile minimal
+          rustup default "$RUST_VERSION"
+
+      - uses: actions/cache@v6
+        with:
+          path: |
+            ~/.cargo/registry
+            rust/verify/target
+          key: cargo-${{ env.RUST_VERSION }}-${{ hashFiles('rust/verify/Cargo.lock') }}
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: js/package-lock.json
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - uses: actions/cache@v6
+        with:
+          path: .cache
+          key: inputs-${{ hashFiles('scripts/fetch-inputs.sh') }}
+
+      - name: Inputs (pinned upstream refs)
+        run: make inputs
+
+      - name: Unit tests
+        run: make test
+
+      - name: Decoder agreement
+        run: make verify
+
+      - name: Coverage and set cover
+        run: make coverage
+
+      - name: Corpus rows
+        run: make corpus
+
+      - name: Mutated corpus
+        run: make mutated
+
+      - name: Harness (fails if any expectation is not met)
+        run: make harness
+
+      - name: Regenerated results match the committed files
+        run: git diff --exit-code -- results corpus/mutated
