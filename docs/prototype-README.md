@@ -1,5 +1,9 @@
 # Hamming prototype (pre-submission)
 
+> Kept for the record: these are the evidence bundle's manual steps. `make inputs verify coverage harness`
+> now does all of this from pinned inputs, and steps 2 and 3 below are replaced by `go/cmd/hamming-harness`
+> with `adapters/wallet-backend/hamming_adapter_test.go.tmpl` (the two test files they copy no longer exist).
+
 Read `PLAN.md` first. Results are in `results/measurements.json`.
 
 ## Reproduce (Linux/macOS, Go ≥ 1.25, Rust stable, Node ≥ 20, Python ≥ 3.11)

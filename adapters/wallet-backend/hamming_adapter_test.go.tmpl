@@ -1,0 +1,261 @@
+package indexer
+
+// Hamming adapter for wallet-backend. go/cmd/hamming-harness renders this template into a worktree of a
+// pinned wallet-backend commit as internal/indexer/hamming_adapter_test.go; it is not part of wallet-backend.
+// It runs inside the indexer package because the indexer is internal (Go's visibility rule), so the harness
+// orchestrates the target instead of importing it.
+//
+// For every corpus entry it decodes each LedgerCloseMeta frame with wallet-backend's own SDK, runs
+// wallet-backend's NewIndexer and ProcessLedger, and then emulates persistence: it calls Value() on every
+// driver.Valuer field of every buffered transaction, operation and state change, the same encoders the
+// database COPY uses. No database is involved. It prints facts, one line per entry; the harness turns facts
+// into verdicts.
+//
+//	HAMMING_LEDGER=<file.xdr | dir | @listfile> go test ./internal/indexer -run '^TestHammingPersist$' -json
+//
+// A listfile has one entry per line: "<path>" or "<path>\t<network passphrase>". Entries without a passphrase
+// use HAMMING_PASSPHRASE, or stellar-core's test passphrase if that is unset.
+
+import (
+	"context"
+	"database/sql/driver"
+	"encoding/binary"
+	"encoding/json"
+	"fmt"
+	"os"
+	"path/filepath"
+	"reflect"
+	"runtime"
+	"sort"
+	"strings"
+	"testing"
+
+	"github.com/alitto/pond/v2"
+	"github.com/stellar/go-stellar-sdk/xdr"
+)
+
+const hammingCoreTestPassphrase = "(V) (;,,;) (V)" // stellar-core src/test/test.cpp
+
+type hammingEntry struct{ path, passphrase string }
+
+type hammingFacts struct {
+	Entry              string   `json:"entry"`
+	Frames             int      `json:"frames"`
+	Ledgers            int      `json:"ledgers"`
+	Protocols          []uint32 `json:"protocols,omitempty"`
+	DecodeErrors       []string `json:"decode_errors,omitempty"`
+	DecodeErrorCount   int      `json:"decode_error_count"`
+	IndexErrors        []string `json:"index_errors,omitempty"`
+	IndexErrorCount    int      `json:"index_error_count"`
+	Panics             []string `json:"panics,omitempty"`
+	PanicCount         int      `json:"panic_count"`
+	PersistErrors      []string `json:"persist_errors,omitempty"`
+	PersistErrorCount  int      `json:"persist_error_count"`
+	TxInMeta           int      `json:"tx_in_meta"`
+	TxIndexed          int      `json:"tx_indexed"`
+	OpsInMeta          int      `json:"ops_in_meta"`
+	OpsIndexed         int      `json:"ops_indexed"`
+	StateChanges       int      `json:"state_changes"`
+	Participants       int      `json:"participants"`
+	PersistedSignerIDs []string `json:"persisted_signer_ids,omitempty"`
+}
+
+const hammingMaxMessages = 5
+
+func hammingNote(list *[]string, count *int, msg string) {
+	*count++
+	if len(msg) > 300 {
+		msg = msg[:300]
+	}
+	for _, m := range *list {
+		if m == msg {
+			return
+		}
+	}
+	if len(*list) < hammingMaxMessages {
+		*list = append(*list, msg)
+	}
+}
+
+func hammingEntries(t *testing.T, spec, defaultPass string) []hammingEntry {
+	if strings.HasPrefix(spec, "@") {
+		b, err := os.ReadFile(spec[1:])
+		if err != nil {
+			t.Fatal(err)
+		}
+		var out []hammingEntry
+		for _, line := range strings.Split(string(b), "\n") {
+			if line = strings.TrimRight(line, "\r"); line == "" {
+				continue
+			}
+			path, pass, ok := strings.Cut(line, "\t")
+			if !ok {
+				pass = defaultPass
+			}
+			out = append(out, hammingEntry{path, pass})
+		}
+		return out
+	}
+	info, err := os.Stat(spec)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !info.IsDir() {
+		return []hammingEntry{{spec, defaultPass}}
+	}
+	var paths []string
+	err = filepath.WalkDir(spec, func(p string, d os.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		// skip dotfiles: macOS writes AppleDouble "._x.xdr" twins on non-APFS volumes
+		if !d.IsDir() && strings.HasSuffix(p, ".xdr") && !strings.HasPrefix(d.Name(), ".") {
+			paths = append(paths, p)
+		}
+		return nil
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	sort.Strings(paths)
+	out := make([]hammingEntry, len(paths))
+	for i, p := range paths {
+		out[i] = hammingEntry{p, defaultPass}
+	}
+	return out
+}
+
+// hammingPersist calls every driver.Valuer field of one buffered row, as the database COPY would.
+func hammingPersist(f *hammingFacts, kind string, row any) {
+	valuer := reflect.TypeOf((*driver.Valuer)(nil)).Elem()
+	v := reflect.ValueOf(row)
+	for v.Kind() == reflect.Pointer {
+		if v.IsNil() {
+			return
+		}
+		v = v.Elem()
+	}
+	if v.Kind() != reflect.Struct {
+		return
+	}
+	for i := 0; i < v.NumField(); i++ {
+		field, name := v.Field(i), v.Type().Field(i).Name
+		if !v.Type().Field(i).IsExported() || !field.Type().Implements(valuer) {
+			continue
+		}
+		if field.Kind() == reflect.Pointer && field.IsNil() {
+			continue
+		}
+		val, err := field.Interface().(driver.Valuer).Value()
+		if err != nil {
+			hammingNote(&f.PersistErrors, &f.PersistErrorCount, fmt.Sprintf("%s.%s: %v", kind, name, err))
+			continue
+		}
+		if name == "SignerAccountID" && val != nil {
+			f.PersistedSignerIDs = append(f.PersistedSignerIDs, fmt.Sprint(field.Interface()))
+		}
+	}
+}
+
+func hammingFrames(path string) ([][]byte, error) {
+	b, err := os.ReadFile(path)
+	if err != nil {
+		return nil, err
+	}
+	var out [][]byte
+	for i := 0; i < len(b); {
+		if len(b)-i < 4 {
+			return out, fmt.Errorf("truncated record mark at byte %d", i)
+		}
+		n := int(binary.BigEndian.Uint32(b[i:]) & 0x7fffffff)
+		i += 4
+		if n > len(b)-i {
+			return out, fmt.Errorf("truncated frame at byte %d: want %d bytes, have %d", i, n, len(b)-i)
+		}
+		out = append(out, b[i:i+n])
+		i += n
+	}
+	return out, nil
+}
+
+func hammingRunEntry(pool pond.Pool, e hammingEntry) hammingFacts {
+	f := hammingFacts{Entry: e.path}
+	pass := e.passphrase
+	frames, err := hammingFrames(e.path)
+	if err != nil {
+		hammingNote(&f.DecodeErrors, &f.DecodeErrorCount, err.Error())
+	}
+	seen := map[uint32]bool{}
+	for _, fr := range frames {
+		f.Frames++
+		var lcm xdr.LedgerCloseMeta
+		if err := xdr.SafeUnmarshal(fr, &lcm); err != nil {
+			hammingNote(&f.DecodeErrors, &f.DecodeErrorCount, err.Error())
+			continue
+		}
+		f.Ledgers++
+		if p := lcm.ProtocolVersion(); !seen[p] {
+			seen[p] = true
+			f.Protocols = append(f.Protocols, p)
+		}
+		f.TxInMeta += lcm.CountTransactions()
+		for _, env := range lcm.TransactionEnvelopes() {
+			f.OpsInMeta += len(env.Operations())
+		}
+		func() {
+			defer func() {
+				if r := recover(); r != nil {
+					hammingNote(&f.Panics, &f.PanicCount, fmt.Sprint(r))
+				}
+			}()
+			idx, err := {{NEW_INDEXER_CALL}}
+			if err != nil {
+				hammingNote(&f.IndexErrors, &f.IndexErrorCount, "NewIndexer: "+err.Error())
+				return
+			}
+			buf := NewIndexerBuffer()
+			n, err := ProcessLedger(context.Background(), pass, lcm, idx, buf)
+			if err != nil {
+				hammingNote(&f.IndexErrors, &f.IndexErrorCount, err.Error())
+				return
+			}
+			f.Participants += n
+			f.TxIndexed += buf.GetNumberOfTransactions()
+			f.OpsIndexed += buf.GetNumberOfOperations()
+			for _, tx := range buf.GetTransactions() {
+				hammingPersist(&f, "Transaction", tx)
+			}
+			for _, op := range buf.GetOperations() {
+				hammingPersist(&f, "Operation", op)
+			}
+			for _, sc := range buf.GetStateChanges() {
+				f.StateChanges++
+				hammingPersist(&f, "StateChange", sc)
+			}
+		}()
+	}
+	return f
+}
+
+func TestHammingPersist(t *testing.T) {
+	spec := os.Getenv("HAMMING_LEDGER")
+	if spec == "" {
+		t.Skip("HAMMING_LEDGER not set")
+	}
+	defaultPass := os.Getenv("HAMMING_PASSPHRASE")
+	if defaultPass == "" {
+		defaultPass = hammingCoreTestPassphrase
+	}
+	pool := pond.NewPool(runtime.NumCPU())
+	defer pool.StopAndWait()
+	for _, e := range hammingEntries(t, spec, defaultPass) {
+		// BEGIN lets the harness attribute a crash that kills the test binary to the entry being processed.
+		fmt.Printf("HAMMING_BEGIN %s\n", e.path)
+		facts := hammingRunEntry(pool, e)
+		b, err := json.Marshal(facts)
+		if err != nil {
+			t.Fatal(err)
+		}
+		fmt.Printf("HAMMING_FACTS %s\n", b)
+	}
+}
