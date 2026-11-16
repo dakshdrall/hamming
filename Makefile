@@ -34,8 +34,8 @@ inputs:
 	scripts/fetch-inputs.sh
 
 verify:
-	cd rust/verify && cargo build --release --locked --quiet
-	rust/verify/target/release/hamming-verify $(GOLDEN_P30)
+	cargo build --release --locked --quiet -p hamming-verify
+	target/release/hamming-verify $(GOLDEN_P30)
 	cd go && go run ./cmd/rt $(GOLDEN_P30)
 	cd js && npm ci --no-audit --no-fund --silent
 	node js/lcm_rt.js $(GOLDEN_P30)
@@ -67,4 +67,4 @@ conform:
 
 test:
 	cd go && go test ./...
-	cd rust/verify && cargo test --locked --quiet
+	cargo test --locked --quiet
