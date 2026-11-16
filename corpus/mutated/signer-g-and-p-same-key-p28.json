@@ -1,0 +1,39 @@
+{
+  "id": "signer-g-and-p-same-key-p28",
+  "rule": "signer-g-and-p-same-key",
+  "rule_number": 4,
+  "synthetic": true,
+  "method": "core-golden mutation: a successful SetOptions adds an ed25519 signer K2 to an account that already has an ed25519 signer K1; K2 is rewritten to a CAP-40 signed-payload signer over K1 (32-byte payload) in the envelope and in every entry of that account in the ledger's meta, with signers (and signerSponsoringIDs) re-sorted in core's SignerKey order; tx hash recomputed with the core test passphrase",
+  "source": {
+    "kind": "core-golden",
+    "repo": "stellar/stellar-core",
+    "commit": "abe1c5541827caaafe023954c224cadeb5dddc44",
+    "path": "test-lcm-current/InvokeHostFunctionTests/090b6171bc887479.xdr",
+    "sha256": "921761544e29d4a9b8daab133731d028fac4d7280a0e2276aa4f369f7a7a16ea"
+  },
+  "network_passphrase": "(V) (;,,;) (V)",
+  "ledger_seq": 13,
+  "protocol": 28,
+  "op_index": 0,
+  "old_tx_hash": "35778ed447d2cf441485f8aaeacd96500d3f617230ef1d63255fc1151d6d8848",
+  "new_tx_hash": "9696647a34d3442e1b0d299377b6634421d2be1ed74fdd65d4805aba2219f4ab",
+  "atoms": [
+    "SignerKey|SIGNER_KEY_TYPE_ED25519_SIGNED_PAYLOAD",
+    "AccountEntry.signers[len>1]"
+  ],
+  "not_preserved": [
+    "transaction signatures (they sign the original transaction)",
+    "the ledger header's scpValue.txSetHash (it hashes the original transaction set)"
+  ],
+  "details": {
+    "account": "GCE4HENKZ3ZIHQY4VEYCVX5ZE5LNDIN3FH4MHZCWFKXQZGQIOGAO77CN",
+    "g_signer": "GBUSVINSYSCZ2U3IVAEDO6HJ3U3T7XKJMP2XAGPALOWOGHEL7KZKIF5I",
+    "meta_signer_edits": 1,
+    "p_signer": "PBUSVINSYSCZ2U3IVAEDO6HJ3U3T7XKJMP2XAGPALOWOGHEL7KZKIAAAAAQKXK5LVOV2XK5LVOV2XK5LVOV2XK5LVOV2XK5LVOV2XK5LVOV2XK476A",
+    "payload_bytes": 32,
+    "replaced_ed25519_signer_key": "64bbf80f3c76f2224bf16ce0ca0e9565cb7ee8c7b8804363ce4064958a447fc2",
+    "strkey_payload_bytes": 68
+  },
+  "sha256": "bf0919cfff1010818aa9d1a8c27934c5c21db80d4f3554bdba9fc7e63764b31c",
+  "bytes": 2196
+}

@@ -1,12 +1,36 @@
 {
- "SourceFile": "BeginSponsoringFutureReservesTests/124577e8c014e46f.xdr",
- "OldTxHash": "93b3bfed4f4fb8b6c2fb5854eede30dd9d3e6fd813e256fa2158b3e431cf3a2b",
- "NewTxHash": "f26dc5c4be7fdc90f34a5d819d9f460ca083ba29d793920c03942479aca0177d",
- "SignedPayloadSigner": "PCEDCRZF3WHS3R6CWJ3WFILROPR6U6KR27B5SW6XYISELPLKW347MAAAAAQKXK5LVOV2XK5LVOV2XK5LVOV2XK5LVOV2XK5LVOV2XK5LVOV2XK2COE",
- "LedgerSeq": 4,
- "OpIndex": 1,
- "EnvelopeEdits": 1,
- "MetaSignerEdits": 1,
- "Synthetic": true,
- "Method": "core-golden mutation: ed25519 signer -\u003e CAP-40 signed-payload signer (same key, 32-byte payload) in envelope and op meta; tx hash recomputed with the core test passphrase"
+  "id": "cap40-signed-payload-signer-p28",
+  "rule": "cap40-signed-payload-signer",
+  "rule_number": 1,
+  "synthetic": true,
+  "method": "core-golden mutation: a successful SetOptions that adds an ed25519 signer is rewritten to add a CAP-40 signed-payload signer over the same key with a 32-byte payload, in the envelope and in the operation's account-entry changes; tx hash recomputed with the core test passphrase",
+  "source": {
+    "kind": "core-golden",
+    "repo": "stellar/stellar-core",
+    "commit": "abe1c5541827caaafe023954c224cadeb5dddc44",
+    "path": "test-lcm-current/BeginSponsoringFutureReservesTests/124577e8c014e46f.xdr",
+    "sha256": "cfceb3dad5373ad11f29df1665c71327dff9f69a3a89c2881109a59a6470d44f"
+  },
+  "network_passphrase": "(V) (;,,;) (V)",
+  "ledger_seq": 4,
+  "protocol": 28,
+  "op_index": 1,
+  "old_tx_hash": "93b3bfed4f4fb8b6c2fb5854eede30dd9d3e6fd813e256fa2158b3e431cf3a2b",
+  "new_tx_hash": "f26dc5c4be7fdc90f34a5d819d9f460ca083ba29d793920c03942479aca0177d",
+  "atoms": [
+    "SignerKey|SIGNER_KEY_TYPE_ED25519_SIGNED_PAYLOAD",
+    "SignerKey|SIGNER_KEY_TYPE_ED25519_SIGNED_PAYLOAD.payload<nonempty>"
+  ],
+  "not_preserved": [
+    "transaction signatures (they sign the original transaction)",
+    "the ledger header's scpValue.txSetHash (it hashes the original transaction set)"
+  ],
+  "details": {
+    "meta_signer_edits": 1,
+    "payload_bytes": 32,
+    "signed_payload_signer": "PCEDCRZF3WHS3R6CWJ3WFILROPR6U6KR27B5SW6XYISELPLKW347MAAAAAQKXK5LVOV2XK5LVOV2XK5LVOV2XK5LVOV2XK5LVOV2XK5LVOV2XK2COE",
+    "strkey_payload_bytes": 68
+  },
+  "sha256": "09e72bd170f24fd1f7500149366ae42d8952b0ad7eb6380ab2e7002df7e00a33",
+  "bytes": 2512
 }

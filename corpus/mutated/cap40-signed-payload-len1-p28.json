@@ -1,0 +1,36 @@
+{
+  "id": "cap40-signed-payload-len1-p28",
+  "rule": "cap40-signed-payload-len1",
+  "rule_number": 3,
+  "synthetic": true,
+  "method": "core-golden mutation: as rule 1, with a 1-byte payload; tx hash recomputed with the core test passphrase",
+  "source": {
+    "kind": "core-golden",
+    "repo": "stellar/stellar-core",
+    "commit": "abe1c5541827caaafe023954c224cadeb5dddc44",
+    "path": "test-lcm-current/BeginSponsoringFutureReservesTests/124577e8c014e46f.xdr",
+    "sha256": "cfceb3dad5373ad11f29df1665c71327dff9f69a3a89c2881109a59a6470d44f"
+  },
+  "network_passphrase": "(V) (;,,;) (V)",
+  "ledger_seq": 4,
+  "protocol": 28,
+  "op_index": 1,
+  "old_tx_hash": "93b3bfed4f4fb8b6c2fb5854eede30dd9d3e6fd813e256fa2158b3e431cf3a2b",
+  "new_tx_hash": "73693b723972fb2f321d5e2199f4193003e86bbb27dcdd36446a3c1eb789cc20",
+  "atoms": [
+    "SignerKey|SIGNER_KEY_TYPE_ED25519_SIGNED_PAYLOAD",
+    "SignerKey|SIGNER_KEY_TYPE_ED25519_SIGNED_PAYLOAD.payload<nonempty>"
+  ],
+  "not_preserved": [
+    "transaction signatures (they sign the original transaction)",
+    "the ledger header's scpValue.txSetHash (it hashes the original transaction set)"
+  ],
+  "details": {
+    "meta_signer_edits": 1,
+    "payload_bytes": 1,
+    "signed_payload_signer": "PCEDCRZF3WHS3R6CWJ3WFILROPR6U6KR27B5SW6XYISELPLKW347MAAAAAA2WAAAADDX4",
+    "strkey_payload_bytes": 40
+  },
+  "sha256": "cd33051c7246406aab324dd5280a140f1fa2af20e8cb2a4d2a658f7f20efb3a9",
+  "bytes": 2456
+}

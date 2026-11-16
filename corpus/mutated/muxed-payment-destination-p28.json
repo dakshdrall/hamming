@@ -1,0 +1,37 @@
+{
+  "id": "muxed-payment-destination-p28",
+  "rule": "muxed-payment-destination",
+  "rule_number": 2,
+  "synthetic": true,
+  "method": "core-golden mutation: the destination of a successful Payment is rewritten from an ed25519 account (G) to a muxed account (M) over the same key with id 2^53+1, in the envelope only; tx hash recomputed with the core test passphrase",
+  "source": {
+    "kind": "core-golden",
+    "repo": "stellar/stellar-core",
+    "commit": "abe1c5541827caaafe023954c224cadeb5dddc44",
+    "path": "test-lcm-current/FrozenLedgerKeysTests/0130d32614dbc252.xdr",
+    "sha256": "d9faa3e0f81ace1fe617720f33f5962b835cfa72604e3490d90e65d6867adc6e"
+  },
+  "network_passphrase": "(V) (;,,;) (V)",
+  "ledger_seq": 9,
+  "protocol": 28,
+  "op_index": 0,
+  "old_tx_hash": "4e0ce123ecce4a245b02ecf0357332e71576fef26fa95a3ce0c29b6e4e5928f4",
+  "new_tx_hash": "e06a223bbd28befc7457d60bd06325097df4eca9d044ff0b51711ea4bf396ac5",
+  "atoms": [
+    "MuxedAccount|KEY_TYPE_MUXED_ED25519",
+    "uint64#2^53+1"
+  ],
+  "not_preserved": [
+    "the transaction meta, including any operation events, is unchanged and still names the unmuxed destination",
+    "transaction signatures (they sign the original transaction)",
+    "the ledger header's scpValue.txSetHash (it hashes the original transaction set)"
+  ],
+  "details": {
+    "destination_after": "MBIFX2QKGC6J4VRBEQDJZJSFZA43IQK2CYR3BF473UFC7VMSOOM2YABAAAAAAAAAAF6K2",
+    "destination_before": "GBIFX2QKGC6J4VRBEQDJZJSFZA43IQK2CYR3BF473UFC7VMSOOM2Z7SX",
+    "muxed_id": 9007199254740993,
+    "strkey_payload_bytes": 40
+  },
+  "sha256": "e5f3faea2474f536df65356ca1dc20fc908fe7e85c58945847cfcba21aebf981",
+  "bytes": 1624
+}
