@@ -38,6 +38,10 @@ type Rule struct {
 	ID      string
 	Number  int
 	Summary string
+	// Level is the corpus level of the output: structural, value or relational (docs/manifest.md).
+	Level string
+	// Caps are the CAPs the output exercises.
+	Caps []string
 	// Method is recorded in the sidecar: what was rewritten and what was preserved.
 	Method string
 	// Atoms are coverage atoms (python/xdr_coverage.py names) the output must contain.
@@ -132,6 +136,9 @@ type Sidecar struct {
 	ID                string         `json:"id"`
 	Rule              string         `json:"rule"`
 	RuleNumber        int            `json:"rule_number"`
+	Summary           string         `json:"summary"`
+	Level             string         `json:"level"`
+	Caps              []string       `json:"caps"`
 	Synthetic         bool           `json:"synthetic"`
 	Method            string         `json:"method"`
 	Source            Source         `json:"source"`
@@ -166,7 +173,8 @@ func (res *Result) Sidecar(goldenDir, coreCommit, passphrase string) (Sidecar, e
 	}
 	srcSum, outSum := sha256.Sum256(src), sha256.Sum256(res.Output)
 	return Sidecar{
-		ID: res.Name(), Rule: res.Rule.ID, RuleNumber: res.Rule.Number, Synthetic: true, Method: res.Rule.Method,
+		ID: res.Name(), Rule: res.Rule.ID, RuleNumber: res.Rule.Number, Summary: res.Rule.Summary,
+		Level: res.Rule.Level, Caps: res.Rule.Caps, Synthetic: true, Method: res.Rule.Method,
 		Source: Source{Kind: "core-golden", Repo: "stellar/stellar-core", Commit: coreCommit,
 			Path: filepath.ToSlash(filepath.Join(filepath.Base(goldenDir), res.SourcePath)), SHA256: hex.EncodeToString(srcSum[:])},
 		NetworkPassphrase: passphrase, LedgerSeq: res.LedgerSeq, Protocol: res.Protocol, OpIndex: res.OpIndex,
@@ -192,6 +200,7 @@ const payloadByte = 0xAB
 var Rules = []*Rule{
 	{
 		ID: "cap40-signed-payload-signer", Number: 1,
+		Level: "structural", Caps: []string{"CAP-0040"},
 		Summary: "ed25519 signer -> CAP-40 signed-payload signer over the same key (32-byte payload)",
 		Method: "core-golden mutation: a successful SetOptions that adds an ed25519 signer is rewritten to add a CAP-40 " +
 			"signed-payload signer over the same key with a 32-byte payload, in the envelope and in the operation's " +
@@ -202,6 +211,7 @@ var Rules = []*Rule{
 	},
 	{
 		ID: "muxed-payment-destination", Number: 2,
+		Level: "structural", Caps: []string{"CAP-0027"},
 		Summary: "G -> M payment destination (muxed id 2^53+1), envelope only",
 		Method: "core-golden mutation: the destination of a successful Payment is rewritten from an ed25519 account (G) to " +
 			"a muxed account (M) over the same key with id 2^53+1, in the envelope only; tx hash recomputed with the core " +
@@ -214,6 +224,7 @@ var Rules = []*Rule{
 	},
 	{
 		ID: "cap40-signed-payload-len1", Number: 3,
+		Level: "structural", Caps: []string{"CAP-0040"},
 		Summary:      "CAP-40 signed-payload signer with a 1-byte payload (shortest non-empty)",
 		Method:       "core-golden mutation: as rule 1, with a 1-byte payload; tx hash recomputed with the core test passphrase",
 		Atoms:        []string{"SignerKey|SIGNER_KEY_TYPE_ED25519_SIGNED_PAYLOAD", "SignerKey|SIGNER_KEY_TYPE_ED25519_SIGNED_PAYLOAD.payload<nonempty>"},
@@ -222,6 +233,7 @@ var Rules = []*Rule{
 	},
 	{
 		ID: "cap40-signed-payload-len64", Number: 3,
+		Level: "structural", Caps: []string{"CAP-0040"},
 		Summary: "CAP-40 signed-payload signer with a 64-byte payload (the XDR maximum)",
 		Method: "core-golden mutation: as rule 1, with a 64-byte payload (opaque<64> maximum); tx hash recomputed with the " +
 			"core test passphrase",
@@ -231,6 +243,7 @@ var Rules = []*Rule{
 	},
 	{
 		ID: "signer-g-and-p-same-key", Number: 4,
+		Level: "relational", Caps: []string{"CAP-0040"},
 		Summary: "one account holds a G signer and a P signer over the same ed25519 key",
 		Method: "core-golden mutation: a successful SetOptions adds an ed25519 signer K2 to an account that already has an " +
 			"ed25519 signer K1; K2 is rewritten to a CAP-40 signed-payload signer over K1 (32-byte payload) in the envelope " +

@@ -1,0 +1,11 @@
+[package]
+name = "hamming-corpus"
+version = "0.1.0"
+edition = "2021"
+description = "Builds corpus/v0/manifest.json from the golden cover and the mutated-entry sidecars"
+license = "Apache-2.0"
+
+[dependencies]
+hamming-verify = { path = "../verify" }
+serde_json = "1.0.154"
+sha2 = "0.11.1"

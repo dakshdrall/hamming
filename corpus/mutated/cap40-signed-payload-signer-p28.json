@@ -2,6 +2,11 @@
   "id": "cap40-signed-payload-signer-p28",
   "rule": "cap40-signed-payload-signer",
   "rule_number": 1,
+  "summary": "ed25519 signer -> CAP-40 signed-payload signer over the same key (32-byte payload)",
+  "level": "structural",
+  "caps": [
+    "CAP-0040"
+  ],
   "synthetic": true,
   "method": "core-golden mutation: a successful SetOptions that adds an ed25519 signer is rewritten to add a CAP-40 signed-payload signer over the same key with a 32-byte payload, in the envelope and in the operation's account-entry changes; tx hash recomputed with the core test passphrase",
   "source": {

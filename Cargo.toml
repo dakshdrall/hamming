@@ -1,6 +1,6 @@
 [workspace]
 resolver = "2"
-members = ["rust/verify"]
+members = ["rust/verify", "rust/corpus"]
 
 [profile.release]
 opt-level = 3

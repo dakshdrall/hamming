@@ -1,6 +1,6 @@
 {
   "schema": "https://example.invalid/xdr-corpus/manifest.schema.json",
-  "schema_version": "0.1.0",
+  "schema_version": "0.2.0",
   "network_passphrase": "Test SDF Network ; September 2015",
   "entries": [
     {

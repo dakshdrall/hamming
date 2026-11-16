@@ -2,6 +2,11 @@
   "id": "signer-g-and-p-same-key-p28",
   "rule": "signer-g-and-p-same-key",
   "rule_number": 4,
+  "summary": "one account holds a G signer and a P signer over the same ed25519 key",
+  "level": "relational",
+  "caps": [
+    "CAP-0040"
+  ],
   "synthetic": true,
   "method": "core-golden mutation: a successful SetOptions adds an ed25519 signer K2 to an account that already has an ed25519 signer K1; K2 is rewritten to a CAP-40 signed-payload signer over K1 (32-byte payload) in the envelope and in every entry of that account in the ledger's meta, with signers (and signerSponsoringIDs) re-sorted in core's SignerKey order; tx hash recomputed with the core test passphrase",
   "source": {

@@ -2,6 +2,11 @@
   "id": "cap40-signed-payload-len64-p28",
   "rule": "cap40-signed-payload-len64",
   "rule_number": 3,
+  "summary": "CAP-40 signed-payload signer with a 64-byte payload (the XDR maximum)",
+  "level": "structural",
+  "caps": [
+    "CAP-0040"
+  ],
   "synthetic": true,
   "method": "core-golden mutation: as rule 1, with a 64-byte payload (opaque<64> maximum); tx hash recomputed with the core test passphrase",
   "source": {

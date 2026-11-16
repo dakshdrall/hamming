@@ -1,10 +1,16 @@
 """Index stellar-core's committed golden LCMs as corpus seed entries: one row per golden file,
 with the core test section that produced it and the atoms it covers. Files are referenced by
-path + core commit + sha256 (not copied)."""
+path + core commit + sha256 (not copied).
+
+Usage: golden_manifest.py <stellar-xdr dir> <golden root> <core commit> [cover.json]
+
+With cover.json (a list of "<dir>/<file>.xdr" paths, e.g. golden_cover.json), the rows of those files
+also carry "atom_list", the sorted atoms they cover, for the corpus builder."""
 import hashlib, json, os, sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import xdr_shapes as XS, xdr_coverage as XC
 xdr_dir, root_dir, commit = sys.argv[1], sys.argv[2], sys.argv[3]
+cover = set(json.load(open(sys.argv[4]))) if len(sys.argv) > 4 else set()
 defs, atoms, _ = XS.summarize(xdr_dir)
 dec = XC.Decoder(defs)
 rows, first_seen = [], {}
@@ -22,6 +28,11 @@ for d in sorted(os.listdir(root_dir)):
                      "commit": commit, "path": f"{os.path.basename(root_dir)}/{d}/{f}"},
                      "sha256": hashlib.sha256(open(p, "rb").read()).hexdigest(), "protocol": proto,
                      "core_test": idx.get(f[:-4]), "ledger_close_metas": n, "atoms": len(got)})
+        if f"{d}/{f}" in cover:
+            rows[-1]["atom_list"] = got
+            cover.discard(f"{d}/{f}")
+if cover:
+    sys.exit(f"cover files not found under {root_dir}: {sorted(cover)[:5]}")
 out = {"core_commit": commit, "entries": len(rows), "atoms_covered": len(first_seen), "atoms_total": len(atoms),
        "atom_to_first_core_test": first_seen, "entries_index": rows}
 json.dump(out, open("core_golden_manifest.json", "w"), indent=1)

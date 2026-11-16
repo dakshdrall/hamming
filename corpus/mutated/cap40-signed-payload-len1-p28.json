@@ -2,6 +2,11 @@
   "id": "cap40-signed-payload-len1-p28",
   "rule": "cap40-signed-payload-len1",
   "rule_number": 3,
+  "summary": "CAP-40 signed-payload signer with a 1-byte payload (shortest non-empty)",
+  "level": "structural",
+  "caps": [
+    "CAP-0040"
+  ],
   "synthetic": true,
   "method": "core-golden mutation: as rule 1, with a 1-byte payload; tx hash recomputed with the core test passphrase",
   "source": {

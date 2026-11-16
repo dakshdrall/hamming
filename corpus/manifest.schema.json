@@ -1,0 +1,354 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "manifest.schema.json",
+  "title": "Stellar XDR shape corpus manifest (0.2.0)",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "network_passphrase",
+    "entries"
+  ],
+  "properties": {
+    "schema": {
+      "type": "string"
+    },
+    "schema_version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$"
+    },
+    "network_passphrase": {
+      "type": "string",
+      "description": "Passphrase transaction hashes were computed with; an entry's own network_passphrase overrides it"
+    },
+    "entries": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/entry"
+      }
+    },
+    "description": {
+      "type": "string"
+    },
+    "generated_by": {
+      "type": "string",
+      "description": "Command that regenerates this manifest"
+    }
+  },
+  "$defs": {
+    "entry": {
+      "type": "object",
+      "required": [
+        "id",
+        "level",
+        "xdr_type",
+        "encoding",
+        "sha256",
+        "protocol_min",
+        "source",
+        "synthetic",
+        "atoms"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^((str|val|rel)\\.[a-z0-9-]+\\.[a-z0-9-]+\\.\\d{4}|core\\.[A-Za-z0-9]+\\.[0-9a-f]{16})$",
+          "description": "level.family.pattern.serial, or core.<test directory>.<golden file stem> for core goldens; stable forever, never reused"
+        },
+        "title": {
+          "type": "string"
+        },
+        "level": {
+          "enum": [
+            "structural",
+            "value",
+            "relational"
+          ],
+          "description": "structural = a grammar atom (union arm, optional, length class); value = a boundary value inside a valid shape; relational = a property across two or more fields (ordering, collision, envelope-vs-meta)"
+        },
+        "xdr_type": {
+          "type": "string",
+          "description": "Root XDR type to decode the file as, e.g. LedgerCloseMeta, TransactionEnvelope, SCVal"
+        },
+        "file": {
+          "type": "string"
+        },
+        "encoding": {
+          "enum": [
+            "base64",
+            "raw",
+            "xdr-framed"
+          ],
+          "description": "base64: one value as base64 text; raw: one value as bytes; xdr-framed: one or more record-marked values (4-byte big-endian length, high bit set)"
+        },
+        "sha256": {
+          "$ref": "#/$defs/sha256",
+          "description": "base64: hash of the decoded bytes; raw and xdr-framed: hash of the file as stored (record marks included)"
+        },
+        "bytes": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "caps": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "pattern": "^CAP-\\d{4}$"
+          }
+        },
+        "protocol_min": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "protocol_max": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "source": {
+          "$ref": "#/$defs/source"
+        },
+        "synthetic": {
+          "type": "boolean"
+        },
+        "atoms": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string"
+          },
+          "description": "Shape atoms covered; structural atoms use the generated atom IDs, value/relational atoms use val:/rel: prefixes"
+        },
+        "expected": {
+          "type": "object",
+          "minProperties": 1,
+          "description": "Path -> expected decoded value. Paths use the language-neutral SEP-style field names; values are JSON (64-bit+ integers as decimal strings)"
+        },
+        "sdk_rules": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Behavioural checks every SDK adapter must run against this entry"
+        },
+        "sightings": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[\\w.-]+/[\\w.-]+#\\d+$"
+          }
+        },
+        "frames": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Number of values in an xdr-framed entry"
+        },
+        "network_passphrase": {
+          "type": "string",
+          "description": "Overrides the manifest's network_passphrase for this entry"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "source": {
+                "properties": {
+                  "kind": {
+                    "const": "core-golden"
+                  }
+                }
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "synthetic": {
+                "const": false
+              },
+              "encoding": {
+                "const": "xdr-framed"
+              }
+            },
+            "not": {
+              "required": [
+                "file"
+              ]
+            }
+          },
+          "else": {
+            "required": [
+              "file",
+              "caps",
+              "expected"
+            ]
+          }
+        }
+      ]
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "commit": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{40}$"
+    },
+    "source": {
+      "type": "object",
+      "required": [
+        "kind"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "enum": [
+            "mainnet",
+            "testnet",
+            "local-core",
+            "core-golden",
+            "synthetic"
+          ],
+          "description": "core-golden: a stellar-core golden file referenced by commit + path + sha256, not copied; local-core: captured from a local stellar-core network"
+        },
+        "ledger": {
+          "type": "integer"
+        },
+        "tx_hash": {
+          "$ref": "#/$defs/sha256"
+        },
+        "core_version": {
+          "type": "string"
+        },
+        "generator": {
+          "type": "string"
+        },
+        "reproduce": {
+          "type": "string",
+          "description": "Exact command that regenerates this entry offline"
+        },
+        "core_capture": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Path or URL of the LedgerCloseMeta this entry was cut from"
+        },
+        "lcm_golden_match": {
+          "type": [
+            "boolean",
+            "null"
+          ],
+          "description": "Agrees with stellar-core --check-lcm golden, where one exists"
+        },
+        "repo": {
+          "type": "string",
+          "pattern": "^[\\w.-]+/[\\w.-]+$"
+        },
+        "commit": {
+          "$ref": "#/$defs/commit"
+        },
+        "path": {
+          "type": "string",
+          "description": "Path inside repo at commit"
+        },
+        "core_test": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "stellar-core test section that produced the golden (from the golden directory's index.json)"
+        },
+        "image": {
+          "type": "string",
+          "description": "Container image (with tag or digest) the local network ran"
+        },
+        "protocol": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "network_passphrase": {
+          "type": "string"
+        },
+        "tx_hashes": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/sha256"
+          }
+        },
+        "ledgers": {
+          "type": "array",
+          "items": {
+            "type": "integer"
+          }
+        },
+        "derived_from": {
+          "type": "object",
+          "required": [
+            "repo",
+            "commit",
+            "path",
+            "sha256"
+          ],
+          "additionalProperties": false,
+          "description": "The core golden a synthetic mutation started from",
+          "properties": {
+            "repo": {
+              "type": "string"
+            },
+            "commit": {
+              "$ref": "#/$defs/commit"
+            },
+            "path": {
+              "type": "string"
+            },
+            "sha256": {
+              "$ref": "#/$defs/sha256"
+            }
+          }
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "core-golden"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "repo",
+              "commit",
+              "path",
+              "core_test"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "local-core"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "image",
+              "core_version",
+              "protocol",
+              "network_passphrase",
+              "tx_hashes"
+            ]
+          }
+        }
+      ]
+    }
+  },
+  "additionalProperties": false
+}
