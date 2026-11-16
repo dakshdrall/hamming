@@ -106,7 +106,7 @@ fn manifest_problems_are_reported() {
     m["entries"][2]["file"] = Value::String("gone.xdr".into()); // missing file
     fs::write(&path, serde_json::to_string(&m).unwrap()).unwrap();
 
-    let rep = verify_manifest(&path, &d.join("manifest.schema.json"), None).unwrap();
+    let rep = verify_manifest(&path, &repo().join("corpus/manifest.schema.json"), None).unwrap();
     assert!(!rep.ok());
     assert_eq!(rep.sha256_mismatches.len(), 1, "{rep:?}");
     assert!(
@@ -168,5 +168,64 @@ fn protocol_30_goldens_baseline() {
         (866, 15306, 0, 0),
         "{:?}",
         t.examples
+    );
+}
+
+/// Schema 0.2.0: core goldens are referenced (no file, caps or expected), local captures carry their network.
+#[test]
+fn schema_0_2_0_rules() {
+    let schema: Value = serde_json::from_str(
+        &fs::read_to_string(repo().join("corpus/manifest.schema.json")).unwrap(),
+    )
+    .unwrap();
+    let golden = serde_json::json!({
+        "id": "core.BumpSequenceTests.27d2533d64835282", "level": "structural", "xdr_type": "LedgerCloseMeta",
+        "encoding": "xdr-framed", "sha256": "0".repeat(64), "protocol_min": 30, "synthetic": false,
+        "atoms": ["LedgerCloseMeta|2"],
+        "source": {"kind": "core-golden", "repo": "stellar/stellar-core", "commit": "f".repeat(40),
+                   "path": "test-lcm-current/BumpSequenceTests/27d2533d64835282.xdr", "core_test": "bump sequence"}
+    });
+    let doc = |e: Value| serde_json::json!({"schema_version": "0.2.0", "network_passphrase": "p", "entries": [e]});
+    let errs = |e: Value| schema_errors(&schema, &doc(e)).unwrap();
+    assert!(
+        errs(golden.clone()).is_empty(),
+        "{:?}",
+        errs(golden.clone())
+    );
+
+    let mut with_file = golden.clone();
+    with_file["file"] = "copy.xdr".into();
+    assert!(
+        !errs(with_file).is_empty(),
+        "a core golden must be referenced, not copied"
+    );
+
+    let mut no_core_test = golden.clone();
+    no_core_test["source"]
+        .as_object_mut()
+        .unwrap()
+        .remove("core_test");
+    assert!(!errs(no_core_test).is_empty());
+
+    let mut local = golden.clone();
+    local["id"] = "str.cap40-signed-payload-signer.p28.0001".into();
+    local["file"] = "x.xdr".into();
+    local["caps"] = serde_json::json!(["CAP-0040"]);
+    local["expected"] = serde_json::json!({"derived.txHash": "00"});
+    local["source"] = serde_json::json!({"kind": "local-core", "core_version": "v28", "protocol": 28,
+                                         "network_passphrase": "Standalone Network ; February 2017", "tx_hashes": ["0".repeat(64)]});
+    assert!(
+        !errs(local.clone()).is_empty(),
+        "local-core without image accepted"
+    );
+    local["source"]["image"] = "stellar/quickstart:tag".into();
+    assert!(errs(local.clone()).is_empty(), "{:?}", errs(local.clone()));
+
+    let mut synthetic = local.clone();
+    synthetic["source"] = serde_json::json!({"kind": "synthetic"});
+    synthetic.as_object_mut().unwrap().remove("caps");
+    assert!(
+        !errs(synthetic).is_empty(),
+        "non-golden entry without caps accepted"
     );
 }
