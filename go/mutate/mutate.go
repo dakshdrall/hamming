@@ -200,6 +200,18 @@ var Rules = []*Rule{
 		NotPreserved: notPreservedCommon,
 		Apply:        signedPayloadSigner(32),
 	},
+	{
+		ID: "muxed-payment-destination", Number: 2,
+		Summary: "G -> M payment destination (muxed id 2^53+1), envelope only",
+		Method: "core-golden mutation: the destination of a successful Payment is rewritten from an ed25519 account (G) to " +
+			"a muxed account (M) over the same key with id 2^53+1, in the envelope only; tx hash recomputed with the core " +
+			"test passphrase",
+		// xdr_coverage.py names integer boundary atoms after the typedef (uint64), not the field
+		Atoms: []string{"MuxedAccount|KEY_TYPE_MUXED_ED25519", "uint64#2^53+1"},
+		NotPreserved: append([]string{"the transaction meta, including any operation events, is unchanged and still " +
+			"names the unmuxed destination"}, notPreservedCommon...),
+		Apply: muxedPaymentDestination(1<<53 + 1),
+	},
 }
 
 // Lookup returns the rule with the given id.
@@ -264,6 +276,30 @@ func signedPayloadSigner(n int) func(c *Candidate) (int, map[string]any, bool) {
 			so.Signer.Key = newKey
 			return oi, map[string]any{"signed_payload_signer": addr, "payload_bytes": n,
 				"strkey_payload_bytes": plen, "meta_signer_edits": edits}, true
+		}
+		return 0, nil, false
+	}
+}
+
+// muxedPaymentDestination is rule 2.
+func muxedPaymentDestination(id uint64) func(c *Candidate) (int, map[string]any, bool) {
+	return func(c *Candidate) (int, map[string]any, bool) {
+		ops := c.Env.Operations()
+		for oi := range ops {
+			p := ops[oi].Body.PaymentOp
+			if p == nil || p.Destination.Type != xdr.CryptoKeyTypeKeyTypeEd25519 {
+				continue
+			}
+			before := p.Destination.Address()
+			p.Destination = xdr.MuxedAccount{Type: xdr.CryptoKeyTypeKeyTypeMuxedEd25519,
+				Med25519: &xdr.MuxedAccountMed25519{Id: xdr.Uint64(id), Ed25519: *p.Destination.Ed25519}}
+			after := p.Destination.Address()
+			raw, err := strkey.Decode(strkey.VersionByteMuxedAccount, after)
+			if err != nil {
+				panic(fmt.Sprintf("muxed address %s does not decode: %v", after, err))
+			}
+			return oi, map[string]any{"destination_before": before, "destination_after": after, "muxed_id": id,
+				"strkey_payload_bytes": len(raw)}, true
 		}
 		return 0, nil, false
 	}
