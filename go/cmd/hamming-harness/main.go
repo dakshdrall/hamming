@@ -183,8 +183,8 @@ func printSummary(r *harness.Report) {
 	if g := r.Golden; g != nil {
 		fmt.Printf("  golden replay at %s (%s): %d files, %d ledgers, %d transactions, %d operations\n",
 			g.Commit, g.Root, g.Files, g.Ledgers, g.Transactions, g.Operations)
-		fmt.Printf("    verdicts %v; decode errors %d, indexer errors %d, panics %d, persist errors %d, crashes %d\n",
-			g.Verdicts, g.DecodeErrors, g.IndexErrors, g.Panics, g.PersistErrors, g.Crashes)
+		fmt.Printf("    verdicts %v; decode errors %d, indexer errors %d, panics %d, persist errors %d, crashes %d; %d values normalized on read-back\n",
+			g.Verdicts, g.DecodeErrors, g.IndexErrors, g.Panics, g.PersistErrors, g.Crashes, g.Normalized)
 	}
 	if r.ExpectationsMet {
 		fmt.Println("expectations: all met")

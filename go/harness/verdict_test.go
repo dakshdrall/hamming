@@ -49,6 +49,13 @@ func TestClassify(t *testing.T) {
 		reason string // substring of the reason
 	}{
 		{"clean entry", ok, Pass, "1 ledgers"},
+		{"normalized values are reported but pass", with(func(f *Facts) {
+			f.Normalized, f.NormalizedCount = []string{"StateChange.X: MA... reads back as GA..."}, 1
+		}), Pass, "1 stored values read back normalized"},
+		{"lossy write (#716) is a persist failure", with(func(f *Facts) {
+			f.PersistErrors = []string{"StateChange.SignerAccountID: P... is stored lossily and reads back as P..., which does not decode"}
+			f.PersistErrorCount = 1
+		}), MishandledPersist, "stored lossily"},
 		{"#729 on 2a0a84e", with(func(f *Facts) { f.PersistErrors, f.PersistErrorCount = []string{msg729}, 1 }),
 			MishandledPersist, "68-byte key payload"},
 		{"P30 golden on v0.7.3", Facts{Frames: 2, DecodeErrors: []string{msgP30OnOldSDK}, DecodeErrorCount: 2},

@@ -52,6 +52,7 @@ type GoldenResult struct {
 	IndexErrors   int             `json:"index_errors"`
 	Panics        int             `json:"panics"`
 	PersistErrors int             `json:"persist_errors"`
+	Normalized    int             `json:"normalized"` // stored values that read back different but valid
 	Crashes       int             `json:"crashes"`
 	Verdicts      map[Verdict]int `json:"verdicts"`
 	Unexpected    []GoldenFile    `json:"unexpected,omitempty"` // at most maxUnexpected
@@ -81,6 +82,7 @@ func Summarize(g GoldenReplay, facts []Facts, rel func(string) string) *GoldenRe
 		r.IndexErrors += f.IndexErrorCount
 		r.Panics += f.PanicCount
 		r.PersistErrors += f.PersistErrorCount
+		r.Normalized += f.NormalizedCount
 		if f.Crash != "" {
 			r.Crashes++
 		}

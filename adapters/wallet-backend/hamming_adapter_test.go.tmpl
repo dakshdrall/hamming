@@ -8,8 +8,9 @@ package indexer
 // For every corpus entry it decodes each LedgerCloseMeta frame with wallet-backend's own SDK, runs
 // wallet-backend's NewIndexer and ProcessLedger, and then emulates persistence: it calls Value() on every
 // driver.Valuer field of every buffered transaction, operation and state change, the same encoders the
-// database COPY uses. No database is involved. It prints facts, one line per entry; the harness turns facts
-// into verdicts.
+// database COPY uses, and reads each stored value back through the type's own sql.Scanner, as a later SELECT
+// would. A valid Stellar address that reads back as one that does not decode was stored lossily. No database
+// is involved. It prints facts, one line per entry; the harness turns facts into verdicts.
 //
 //	HAMMING_LEDGER=<file.xdr | dir | @listfile> go test ./internal/indexer -run '^TestHammingPersist$' -json
 //
@@ -18,6 +19,7 @@ package indexer
 
 import (
 	"context"
+	"database/sql"
 	"database/sql/driver"
 	"encoding/binary"
 	"encoding/json"
@@ -31,6 +33,7 @@ import (
 	"testing"
 
 	"github.com/alitto/pond/v2"
+	"github.com/stellar/go-stellar-sdk/strkey"
 	"github.com/stellar/go-stellar-sdk/xdr"
 )
 
@@ -51,6 +54,8 @@ type hammingFacts struct {
 	PanicCount         int      `json:"panic_count"`
 	PersistErrors      []string `json:"persist_errors,omitempty"`
 	PersistErrorCount  int      `json:"persist_error_count"`
+	Normalized         []string `json:"normalized,omitempty"`
+	NormalizedCount    int      `json:"normalized_count"`
 	TxInMeta           int      `json:"tx_in_meta"`
 	TxIndexed          int      `json:"tx_indexed"`
 	OpsInMeta          int      `json:"ops_in_meta"`
@@ -154,7 +159,40 @@ func hammingPersist(f *hammingFacts, kind string, row any) {
 		if name == "SignerAccountID" && val != nil {
 			f.PersistedSignerIDs = append(f.PersistedSignerIDs, fmt.Sprint(field.Interface()))
 		}
+		if val != nil {
+			hammingReadBack(f, kind, name, field, val)
+		}
 	}
+}
+
+// hammingReadBack feeds a stored value to the field type's own Scan, as reading the row back would. A valid
+// Stellar address that comes back as one that no longer decodes was stored lossily (the wallet-backend#716
+// failure mode: no error at write time, a corrupt row afterwards). A value that comes back different but still
+// valid (such as a muxed M address reduced to its G account) is counted as normalized, not as an error.
+func hammingReadBack(f *hammingFacts, kind, name string, field reflect.Value, stored driver.Value) {
+	back := reflect.New(field.Type())
+	sc, ok := back.Interface().(sql.Scanner)
+	if !ok {
+		return
+	}
+	orig := fmt.Sprint(field.Interface())
+	if err := sc.Scan(stored); err != nil {
+		hammingNote(&f.PersistErrors, &f.PersistErrorCount, fmt.Sprintf("%s.%s: stored value does not read back: %v", kind, name, err))
+		return
+	}
+	got := fmt.Sprint(back.Elem().Interface())
+	if got == orig {
+		return
+	}
+	if _, _, err := strkey.DecodeAny(orig); err != nil {
+		return // not an address: equality of other types is not this check's business
+	}
+	if _, _, err := strkey.DecodeAny(got); err != nil {
+		hammingNote(&f.PersistErrors, &f.PersistErrorCount,
+			fmt.Sprintf("%s.%s: %s is stored lossily and reads back as %s, which does not decode: %v", kind, name, orig, got, err))
+		return
+	}
+	hammingNote(&f.Normalized, &f.NormalizedCount, fmt.Sprintf("%s.%s: %s reads back as %s", kind, name, orig, got))
 }
 
 func hammingFrames(path string) ([][]byte, error) {
